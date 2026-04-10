@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnDrive — Gestão de Frota</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM
+═══════════════════════════════════════════ */
+:root {
+  --bg:       #080a0f;
+  --bg1:      #0d1018;
+  --bg2:      #111520;
+  --bg3:      #161c2a;
+  --border:   #1e2535;
+  --border2:  #252e42;
+  --accent:   #00d4ff;
+  --accent2:  #0099cc;
+  --green:    #00e676;
+  --red:      #ff3d3d;
+  --yellow:   #ffb300;
+  --orange:   #ff6d00;
+  --purple:   #9c27b0;
+  --text:     #e8edf5;
+  --text2:    #7a8ba0;
+  --text3:    #3d4e63;
+  --r:        10px;
+  --rs:       7px;
+  --shadow:   0 4px 20px rgba(0,0,0,.4);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Sora',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; font-size:13px; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:99px; }
+input,select,textarea,button { font-family:'Sora',sans-serif; }
+
+/* SCREENS */
+.screen { display:none; }
+.screen.active { display:flex; flex-direction:column; min-height:100vh; }
+
+/* ── BUTTONS ── */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--rs); font-size:12px; font-weight:600; cursor:pointer; border:none; transition:all .18s; white-space:nowrap; }
+.btn-accent { background:var(--accent); color:#000; }
+.btn-accent:hover { background:var(--accent2); }
+.btn-ghost { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+.btn-ghost:hover { background:var(--border2); color:var(--text); }
+.btn-danger { background:rgba(255,61,61,.15); color:var(--red); border:1px solid rgba(255,61,61,.3); }
+.btn-danger:hover { background:rgba(255,61,61,.25); }
+.btn-success { background:rgba(0,230,118,.12); color:var(--green); border:1px solid rgba(0,230,118,.25); }
+.btn-success:hover { background:rgba(0,230,118,.2); }
+.btn-warn { background:rgba(255,179,0,.12); color:var(--yellow); border:1px solid rgba(255,179,0,.25); }
+.btn-sm { padding:5px 10px; font-size:11px; }
+.btn-full { width:100%; justify-content:center; padding:11px; }
+.btn-icon { width:32px; height:32px; padding:0; justify-content:center; background:var(--bg3); border:1px solid var(--border); color:var(--text2); border-radius:var(--rs); }
+.btn-back { display:inline-flex; align-items:center; gap:6px; color:var(--text2); background:none; border:none; cursor:pointer; font-size:12px; padding:4px 0; margin-bottom:16px; }
+.btn-back:hover { color:var(--accent); }
+
+/* ── INPUTS ── */
+.fg { margin-bottom:14px; }
+.fg label { display:block; font-size:11px; font-weight:600; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+.fg input, .fg select, .fg textarea {
+  width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs);
+  padding:9px 12px; color:var(--text); font-size:13px; outline:none; transition:all .18s;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,212,255,.1); }
+.fg textarea { resize:vertical; min-height:80px; }
+.fg select option { background:var(--bg2); }
+.r2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.r3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+/* ── UPLOAD ── */
+.dropzone {
+  border:2px dashed var(--border2); border-radius:var(--r); padding:24px; text-align:center;
+  cursor:pointer; transition:all .2s; background:var(--bg2); position:relative;
+}
+.dropzone:hover, .dropzone.dragover { border-color:var(--accent); background:rgba(0,212,255,.04); }
+.dropzone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+.dropzone .dz-icon { font-size:28px; margin-bottom:8px; }
+.dropzone p { color:var(--text2); font-size:12px; }
+.dropzone p strong { color:var(--accent); }
+.file-list { margin-top:10px; display:flex; flex-direction:column; gap:4px; }
+.file-item { display:flex; align-items:center; justify-content:space-between; background:var(--bg3); border-radius:var(--rs); padding:6px 10px; font-size:11px; }
+.file-item span { color:var(--text2); }
+
+/* ── TOPBAR ── */
+.topbar {
+  background:var(--bg1); border-bottom:1px solid var(--border);
+  padding:0 20px; height:52px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:300; flex-shrink:0; gap:10px;
+}
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.topbar-logo { font-size:18px; font-weight:800; color:var(--accent); letter-spacing:-1px; }
+.hamburger { background:none; border:none; color:var(--text2); font-size:18px; cursor:pointer; display:none; }
+.topbar-right { display:flex; align-items:center; gap:8px; }
+.topbar-user { display:flex; align-items:center; gap:8px; }
+.user-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#0066ff); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#000; }
+.user-name { font-size:12px; color:var(--text2); }
+
+/* ── CALENDAR TOP ── */
+.cal-btn { display:flex; align-items:center; gap:6px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--rs); padding:5px 10px; cursor:pointer; font-size:11px; color:var(--text2); position:relative; }
+.cal-btn:hover { border-color:var(--accent); color:var(--accent); }
+.cal-dropdown { position:absolute; top:calc(100% + 8px); right:0; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:14px; width:280px; z-index:500; box-shadow:var(--shadow); display:none; }
+.cal-dropdown.open { display:block; }
+.cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.cal-month-title { font-size:13px; font-weight:600; }
+.cal-head { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:4px; }
+.cal-head span { text-align:center; font-size:10px; color:var(--text3); font-weight:600; padding:2px; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-day { text-align:center; padding:5px 2px; font-size:11px; border-radius:5px; cursor:pointer; }
+.cal-day:hover { background:var(--bg3); color:var(--accent); }
+.cal-day.today { background:var(--accent); color:#000; font-weight:700; }
+.cal-day.selected { background:rgba(0,212,255,.2); color:var(--accent); }
+.cal-day.other-month { color:var(--text3); }
+.cal-day.has-event { position:relative; }
+.cal-day.has-event::after { content:''; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--green); }
+
+/* ── LAYOUT ── */
+.app-layout { display:flex; flex:1; overflow:hidden; height:calc(100vh - 52px); }
+.sidebar {
+  width:210px; background:var(--bg1); border-right:1px solid var(--border);
+  padding:14px 8px; display:flex; flex-direction:column; gap:2px;
+  overflow-y:auto; flex-shrink:0; transition:transform .3s;
+}
+.sb-label { font-size:9px; font-weight:700; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; padding:10px 10px 4px; margin-top:8px; }
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--rs);
+  cursor:pointer; font-size:12px; font-weight:500; color:var(--text2);
+  border:none; background:none; width:100%; text-align:left; transition:all .18s;
+}
+.nav-item:hover { background:var(--bg3); color:var(--text); }
+.nav-item.active { background:rgba(0,212,255,.1); color:var(--accent); font-weight:600; }
+.nav-item .ni { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
+.nav-badge { margin-left:auto; font-size:9px; font-weight:700; padding:2px 6px; border-radius:99px; color:#000; }
+.nb-red { background:var(--red); }
+.nb-yellow { background:var(--yellow); }
+.nb-blue { background:var(--accent); }
+.main { flex:1; overflow-y:auto; padding:22px; }
+.sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200; }
+
+/* ── IA FLOAT BUTTON ── */
+.ia-float {
+  position:fixed; bottom:24px; right:24px; z-index:400;
+  width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#0066ff);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; box-shadow:0 4px 20px rgba(0,212,255,.4);
+  border:none; font-size:22px; transition:all .2s;
+}
+.ia-float:hover { transform:scale(1.08); box-shadow:0 6px 28px rgba(0,212,255,.6); }
+.ia-panel {
+  position:fixed; bottom:90px; right:24px; z-index:400;
+  width:340px; height:480px; background:var(--bg1);
+  border:1px solid var(--border); border-radius:16px;
+  display:none; flex-direction:column; box-shadow:var(--shadow);
+}
+.ia-panel.open { display:flex; }
+.ia-panel-header { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.ia-panel-header span { font-weight:700; color:var(--accent); font-size:13px; }
+.ia-msgs { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.ia-msg-user { align-self:flex-end; background:var(--accent); color:#000; padding:8px 12px; border-radius:12px 12px 3px 12px; font-size:12px; max-width:80%; }
+.ia-msg-bot { align-self:flex-start; background:var(--bg3); border:1px solid var(--border); padding:8px 12px; border-radius:12px 12px 12px 3px; font-size:12px; max-width:85%; line-height:1.5; }
+.ia-inp-row { padding:10px; border-top:1px solid var(--border); display:flex; gap:6px; }
+.ia-inp { flex:1; background:var(--bg3); border:1px solid var(--border); border-radius:var(--rs); padding:8px 10px; color:var(--text); font-size:12px; outline:none; }
+.ia-inp:focus { border-color:var(--accent); }
+
+/* ── CARDS ── */
+.card { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r); padding:18px; }
+.card-sm { padding:13px; }
+.card-accent { border-color:rgba(0,212,255,.3); background:rgba(0,212,255,.04); }
+
+/* ── STAT CARDS ── */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:18px; }
+.stat { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r); padding:16px; position:relative; overflow:hidden; }
+.stat::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.stat.s-blue::before { background:var(--accent); }
+.stat.s-green::before { background:var(--green); }
+.stat.s-red::before { background:var(--red); }
+.stat.s-yellow::before { background:var(--yellow); }
+.stat.s-purple::before { background:var(--purple); }
+.stat.s-orange::before { background:var(--orange); }
+.stat-icon { font-size:20px; margin-bottom:8px; }
+.stat-val { font-size:22px; font-weight:800; line-height:1; }
+.stat-label { font-size:11px; color:var(--text2); margin-top:3px; }
+.stat-sub { font-size:10px; margin-top:2px; }
+
+/* ── BADGES ── */
+.badge { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:600; padding:3px 8px; border-radius:99px; }
+.b-green { background:rgba(0,230,118,.12); color:var(--green); }
+.b-red { background:rgba(255,61,61,.12); color:var(--red); }
+.b-yellow { background:rgba(255,179,0,.12); color:var(--yellow); }
+.b-blue { background:rgba(0,212,255,.12); color:var(--accent); }
+.b-purple { background:rgba(156,39,176,.12); color:var(--purple); }
+.b-orange { background:rgba(255,109,0,.12); color:var(--orange); }
+.b-gray { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+
+/* ── ALERTS ── */
+.alert-item {
+  display:flex; align-items:flex-start; gap:12px; padding:12px 14px;
+  border-radius:var(--rs); border-left:3px solid; cursor:pointer; transition:all .18s;
+  background:var(--bg2); margin-bottom:6px;
+}
+.alert-item:hover { background:var(--bg3); }
+.alert-item.a-red { border-color:var(--red); }
+.alert-item.a-yellow { border-color:var(--yellow); }
+.alert-item.a-orange { border-color:var(--orange); }
+.alert-item.a-blue { border-color:var(--accent); }
+.alert-item.a-green { border-color:var(--green); }
+.alert-icon { font-size:18px; flex-shrink:0; }
+.alert-content { flex:1; }
+.alert-title { font-size:12px; font-weight:600; margin-bottom:2px; }
+.alert-desc { font-size:11px; color:var(--text2); }
+.alert-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px; flex-shrink:0; }
+
+/* ── TABLE ── */
+.tw { overflow-x:auto; border-radius:var(--r); border:1px solid var(--border); }
+table { width:100%; border-collapse:collapse; min-width:500px; }
+thead { background:var(--bg2); }
+th { padding:10px 13px; text-align:left; font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.6px; white-space:nowrap; }
+td { padding:11px 13px; font-size:12px; border-top:1px solid var(--border); }
+tr:hover td { background:var(--bg2); }
+
+/* ── PAGE HEADER ── */
+.ph { margin-bottom:18px; }
+.ph h1 { font-size:20px; font-weight:800; margin-bottom:3px; }
+.ph p { font-size:12px; color:var(--text2); }
+.ph-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+/* ── MODAL ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:500; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+.modal { background:var(--bg1); border:1px solid var(--border); border-radius:16px; padding:24px; max-width:620px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow); }
+.modal-title { font-size:16px; font-weight:700; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; }
+
+/* ── SCORE RING ── */
+.score-ring { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; border:3px solid; flex-shrink:0; }
+.sr-A { border-color:var(--green); color:var(--green); background:rgba(0,230,118,.08); }
+.sr-B { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,.08); }
+.sr-C { border-color:var(--yellow); color:var(--yellow); background:rgba(255,179,0,.08); }
+.sr-D { border-color:var(--red); color:var(--red); background:rgba(255,61,61,.08); }
+
+/* ── PROG BAR ── */
+.prog { background:var(--bg3); border-radius:99px; height:5px; overflow:hidden; }
+.prog-f { height:100%; border-radius:99px; transition:width .5s; }
+
+/* ── MISC ── */
+.divider { height:1px; background:var(--border); margin:14px 0; }
+.section-title { font-size:13px; font-weight:700; margin-bottom:12px; color:var(--text); }
+.g2c { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.g3c { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+.f { display:flex; } .ic { align-items:center; } .jb { justify-content:space-between; } .fw { flex-wrap:wrap; }
+.g2 { gap:8px; } .g3 { gap:12px; } .g4 { gap:16px; }
+.mb2 { margin-bottom:8px; } .mb3 { margin-bottom:12px; } .mb4 { margin-bottom:16px; } .mb5 { margin-bottom:20px; }
+.mt2 { margin-top:8px; } .mt3 { margin-top:12px; } .mt4 { margin-top:16px; }
+.fw7 { font-weight:700; } .fw8 { font-weight:800; }
+.t-xs { font-size:11px; } .t-sm { font-size:12px; } .t-m { color:var(--text2); }
+.mono { font-family:'Courier New',monospace; }
+.txt-green { color:var(--green); } .txt-red { color:var(--red); } .txt-yellow { color:var(--yellow); } .txt-accent { color:var(--accent); }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.anim { animation:fadeUp .25s ease; }
+.anim2 { animation:fadeUp .25s ease .1s both; }
+.anim3 { animation:fadeUp .25s ease .2s both; }
+
+/* ── STATUS PILL ── */
+.status-pill { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:700; padding:4px 10px; border-radius:99px; }
+
+/* ── LOGIN ── */
+.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,255,.08), transparent); }
+.login-box { width:100%; max-width:380px; }
+.login-logo { font-size:36px; font-weight:800; color:var(--accent); letter-spacing:-2px; margin-bottom:6px; }
+.login-sub { color:var(--text2); font-size:13px; margin-bottom:28px; }
+.role-tabs { display:flex; background:var(--bg2); border-radius:var(--rs); padding:4px; gap:4px; margin-bottom:20px; }
+.role-tab { flex:1; padding:8px; border:none; background:none; border-radius:5px; font-size:11px; font-weight:600; color:var(--text2); cursor:pointer; transition:all .2s; font-family:'Sora',sans-serif; }
+.role-tab.active { background:var(--accent); color:#000; }
+
+/* STATUS SCREENS */
+.sw { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background:var(--bg); }
+.sc { max-width:420px; width:100%; text-align:center; }
+
+/* ── VEHICLE CARD ── */
+.vehicle-card { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; cursor:pointer; transition:all .2s; }
+.vehicle-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,212,255,.1); }
+.vehicle-card-header { height:120px; display:flex; align-items:center; justify-content:center; font-size:48px; background:linear-gradient(135deg,var(--bg2),var(--bg3)); position:relative; }
+.vehicle-card-body { padding:14px; }
+.vehicle-status { position:absolute; top:8px; right:8px; }
+
+/* ── CHART ── */
+.chart-canvas-wrap { position:relative; }
+canvas { border-radius:var(--rs); }
+
+/* ── TABS ── */
+.tabs { display:flex; gap:4px; background:var(--bg2); padding:4px; border-radius:var(--rs); margin-bottom:16px; flex-wrap:wrap; width:fit-content; }
+.tab-btn { padding:6px 14px; border-radius:5px; border:none; background:none; color:var(--text2); font-size:12px; font-weight:500; cursor:pointer; transition:all .18s; font-family:'Sora',sans-serif; }
+.tab-btn.active { background:var(--bg3); color:var(--text); border:1px solid var(--border); }
+
+/* ── WA MSG ── */
+.wa-preview { background:#111; border-radius:var(--r); padding:14px; }
+.wa-bubble { background:#005c4b; border-radius:10px 10px 10px 2px; padding:10px 13px; font-size:12px; line-height:1.6; max-width:290px; }
+.wa-time { font-size:9px; color:#8696a0; text-align:right; margin-top:4px; }
+.wa-phone { font-family:'Courier New',monospace; color:var(--green); font-size:13px; font-weight:700; }
+
+/* ── PIX ── */
+.pix-box { background:var(--bg2); border:2px dashed var(--border2); border-radius:var(--r); padding:20px; text-align:center; }
+.pix-key { font-family:'Courier New',monospace; font-size:16px; font-weight:700; color:var(--accent); letter-spacing:1px; margin:8px 0; }
+
+/* RESPONSIVE */
+@media(max-width:900px) {
+  .hamburger { display:block; }
+  .sidebar { position:fixed; left:0; top:0; bottom:0; z-index:250; width:220px; padding-top:60px; transform:translateX(-100%); }
+  .sidebar.open { transform:translateX(0); }
+  .sb-overlay.open { display:block; }
+  .g3c { grid-template-columns:1fr 1fr; }
+  .stat-grid { grid-template-columns:1fr 1fr; }
+  .ia-panel { width:calc(100vw - 32px); right:16px; }
+}
+@media(max-width:600px) {
+  .main { padding:14px; }
+  .g2c, .g3c { grid-template-columns:1fr; }
+  .stat-grid { grid-template-columns:1fr 1fr; }
+  .r2, .r3 { grid-template-columns:1fr; }
+  .ph-row { flex-direction:column; align-items:flex-start; }
+}
+
+/* TOAST */
+#toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--bg1); border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:12px; font-weight:600; z-index:9999; opacity:0; transition:all .3s; white-space:nowrap; box-shadow:var(--shadow); }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="s-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-box anim">
+      <div class="login-logo">Ondrive</div>
+      <div class="login-sub">Gestão inteligente de frota</div>
+      <div class="fg">
+        <label>Perfil de acesso</label>
+        <div class="role-tabs">
+          <button class="role-tab active" id="rt-adm" onclick="setRole('adm')">🛡️ ADM</button>
+          <button class="role-tab" id="rt-socio" onclick="setRole('socio')">🤝 Sócio</button>
+          <button class="role-tab" id="rt-motor" onclick="setRole('motor')">🚗 Motorista</button>
+        </div>
+      </div>
+      <div class="fg"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <button class="btn btn-accent btn-full" onclick="doLogin()" style="font-size:13px;padding:13px">Entrar no sistema</button>
+      <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--text2)">
+        Motorista sem conta? <span style="color:var(--accent);cursor:pointer" onclick="go('s-reg')">Cadastre-se</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CADASTRO MOTORISTA ═══ -->
+<div id="s-reg" class="screen">
+  <div style="min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="max-width:580px;width:100%" class="anim">
+      <div class="login-logo" style="margin-bottom:4px">Ondrive</div>
+      <div style="color:var(--text2);font-size:12px;margin-bottom:24px">Cadastro de motorista — Preencha todos os campos</div>
+
+      <div class="card mb4">
+        <div class="section-title">👤 Dados Pessoais</div>
+        <div class="r2 mb3">
+          <div class="fg" style="margin:0"><label>Nome completo</label><input placeholder="João da Silva"></div>
+          <div class="fg" style="margin:0"><label>CPF</label><input placeholder="000.000.000-00" maxlength="14"></div>
+        </div>
+        <div class="r2 mb3">
+          <div class="fg" style="margin:0"><label>Data de nascimento</label><input type="date"></div>
+          <div class="fg" style="margin:0"><label>WhatsApp</label><input placeholder="(11) 99999-0000"></div>
+        </div>
+        <div class="fg"><label>Endereço completo (com CEP)</label><input placeholder="Rua, número, bairro, cidade, estado, CEP"></div>
+        <div class="fg"><label>E-mail</label><input type="email" placeholder="seu@email.com"></div>
+      </div>
+
+      <div class="card mb4">
+        <div class="section-title">📋 Documentos para avaliação de Score</div>
+        <div class="alert-item a-blue mb3">
+          <span class="alert-icon">ℹ️</span>
+          <div class="alert-content">
+            <div class="alert-title">Como funciona o score de aprovação</div>
+            <div class="alert-desc">Analisamos CNH, pontuação, histórico de multas e avaliações nos apps de transporte. Quanto melhor o score, melhores as condições do contrato.</div>
+          </div>
+        </div>
+        <div class="r2 mb3">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">CNH (frente)</label>
+            <div class="dropzone" id="dz-cnh-f">
+              <input type="file" accept="image/*,.pdf" onchange="handleFile(event,'dz-cnh-f')">
+              <div class="dz-icon">🪪</div>
+              <p><strong>Clique ou arraste</strong><br>JPG, PNG ou PDF</p>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">CNH (verso)</label>
+            <div class="dropzone" id="dz-cnh-v">
+              <input type="file" accept="image/*,.pdf" onchange="handleFile(event,'dz-cnh-v')">
+              <div class="dz-icon">🪪</div>
+              <p><strong>Clique ou arraste</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><label>Pontuação atual da CNH (informar)</label><input type="number" placeholder="Ex: 0" min="0" max="40"></div>
+        <div class="fg"><label>Histórico de multas (últimos 12 meses)</label><textarea placeholder="Descreva as multas dos últimos 12 meses, ou escreva 'Nenhuma'"></textarea></div>
+        <div class="r2 mb3">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Comprovante de endereço</label>
+            <div class="dropzone" id="dz-comp">
+              <input type="file" accept="image/*,.pdf" onchange="handleFile(event,'dz-comp')">
+              <div class="dz-icon">🏠</div>
+              <p><strong>Clique ou arraste</strong></p>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Print do app (foto + nome + nota)</label>
+            <div class="dropzone" id="dz-app">
+              <input type="file" accept="image/*" onchange="handleFile(event,'dz-app')" multiple>
+              <div class="dz-icon">📱</div>
+              <p><strong>Clique ou arraste</strong><br>Todos os apps que trabalha</p>
+            </div>
+          </div>
+        </div>
+        <div class="fg"><label>Aplicativos que trabalha</label>
+          <div class="r3">
+            <label style="text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox"> Uber</label>
+            <label style="text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox"> 99</label>
+            <label style="text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox"> InDriver</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb4">
+        <div class="section-title">👥 Referências (2 contatos obrigatórios)</div>
+        <div class="alert-item a-yellow mb3">
+          <span class="alert-icon">⚠️</span>
+          <div class="alert-content"><div class="alert-desc">Os contatos de referência serão verificados. É obrigatório conseguir falar com ambos para aprovação.</div></div>
+        </div>
+        <div class="r2 mb3">
+          <div class="fg" style="margin:0"><label>Nome — Referência 1</label><input placeholder="Nome completo"></div>
+          <div class="fg" style="margin:0"><label>Telefone</label><input placeholder="(11) 98888-0001"></div>
+        </div>
+        <div class="fg"><label>Endereço da Referência 1</label><input placeholder="Endereço completo"></div>
+        <div class="r2 mb3">
+          <div class="fg" style="margin:0"><label>Nome — Referência 2</label><input placeholder="Nome completo"></div>
+          <div class="fg" style="margin:0"><label>Telefone</label><input placeholder="(11) 97777-0002"></div>
+        </div>
+        <div class="fg"><label>Endereço da Referência 2</label><input placeholder="Endereço completo"></div>
+      </div>
+
+      <div class="f g3 fw">
+        <button class="btn btn-ghost" onclick="go('s-login')">← Voltar</button>
+        <button class="btn btn-accent" style="flex:1;justify-content:center" onclick="submitReg()">Enviar cadastro para análise →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS SCREENS -->
+<div id="s-pend" class="screen"><div class="sw"><div class="sc anim">
+  <div style="font-size:52px;margin-bottom:16px">⏳</div>
+  <div class="badge b-yellow mb3">AGUARDANDO ANÁLISE</div>
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">Cadastro em análise</h2>
+  <p style="color:var(--text2);font-size:13px;margin-bottom:24px;line-height:1.7">Seus documentos foram recebidos. Você receberá contato pelo WhatsApp quando a análise for concluída.</p>
+  <div class="card mb4" style="text-align:left">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="f ic g3"><span style="color:var(--green)">✅</span><span class="t-sm">Dados pessoais recebidos</span></div>
+      <div class="f ic g3"><span style="color:var(--green)">✅</span><span class="t-sm">Documentos recebidos</span></div>
+      <div class="f ic g3"><span style="color:var(--yellow)">🔍</span><span class="t-sm">Score sendo calculado...</span></div>
+      <div class="f ic g3"><span style="color:var(--text3)">🚗</span><span class="t-sm t-m">Liberação de acesso</span></div>
+    </div>
+  </div>
+  <div class="f g3 fw">
+    <button class="btn btn-ghost btn-full" onclick="go('s-login')">← Voltar ao login</button>
+    <button class="btn btn-success btn-full" onclick="go('s-ok')">[DEMO] Aprovar</button>
+    <button class="btn btn-danger btn-full" onclick="go('s-no')">[DEMO] Reprovar</button>
+  </div>
+</div></div></div>
+
+<div id="s-ok" class="screen"><div class="sw"><div class="sc anim">
+  <div style="font-size:52px;margin-bottom:16px">🎉</div>
+  <div class="badge b-green mb3">APROVADO</div>
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">Bem-vindo ao Ondrive!</h2>
+  <p style="color:var(--text2);font-size:13px;margin-bottom:24px">Seu cadastro foi aprovado. Acesse o painel do motorista.</p>
+  <button class="btn btn-accent btn-full" style="padding:13px" onclick="loginAs('motor')">Acessar meu painel →</button>
+</div></div></div>
+
+<div id="s-no" class="screen"><div class="sw"><div class="sc anim">
+  <div style="font-size:52px;margin-bottom:16px">❌</div>
+  <div class="badge b-red mb3">REPROVADO</div>
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">Cadastro não aprovado</h2>
+  <div class="alert-item a-red mb4"><span class="alert-icon">⚠️</span><div class="alert-content"><div class="alert-desc">Score abaixo do mínimo exigido. Entre em contato com o suporte para mais informações.</div></div></div>
+  <div class="f g3 fw">
+    <button class="btn btn-ghost btn-full" onclick="go('s-login')">← Voltar</button>
+    <button class="btn btn-accent btn-full" onclick="copyText('(11) 99999-0000');showToast('Número copiado: (11) 99999-0000')">💬 Contatar suporte</button>
+  </div>
+</div></div></div>
+
+<!-- ═══════════════════════════════════════
+     PAINEL ADM / SÓCIO
+═══════════════════════════════════════ -->
+<div id="s-adm" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSB()">☰</button>
+      <div class="topbar-logo">Ondrive</div>
+    </div>
+    <div class="topbar-right">
+      <!-- Calendário -->
+      <div style="position:relative">
+        <div class="cal-btn" onclick="toggleCal()" id="cal-trigger">
+          📅 <span id="cal-date-display"></span>
+        </div>
+        <div class="cal-dropdown" id="cal-dropdown">
+          <div class="cal-nav">
+            <button class="btn btn-icon btn-sm" onclick="moveCal(-1)">‹</button>
+            <span class="cal-month-title" id="cal-month-title"></span>
+            <button class="btn btn-icon btn-sm" onclick="moveCal(1)">›</button>
+          </div>
+          <div class="cal-head">
+            <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div class="t-xs t-m" id="cal-events-today">Selecione uma data para ver eventos</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleIA()">🤖 IA</button>
+      <div class="topbar-user">
+        <div class="user-avatar" id="topbar-av">A</div>
+        <span class="user-name" id="topbar-name">ADM</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('s-login')">Sair</button>
+    </div>
+  </div>
+
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSB()"></div>
+
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar">
+      <div class="sb-label">Principal</div>
+      <button class="nav-item active" onclick="navTo('inicio',this)"><span class="ni">🏠</span>Início</button>
+      <button class="nav-item" onclick="navTo('dashboard',this)"><span class="ni">📊</span>Dashboard</button>
+      <div class="sb-label">Gestão</div>
+      <button class="nav-item" onclick="navTo('veiculos',this)"><span class="ni">🚗</span>Veículos</button>
+      <button class="nav-item" onclick="navTo('contratos',this)"><span class="ni">📄</span>Contratos</button>
+      <button class="nav-item" onclick="navTo('financeiro',this)"><span class="ni">💰</span>Financeiro</button>
+      <button class="nav-item" onclick="navTo('alertas',this)"><span class="ni">🔔</span>Alertas <span class="nav-badge nb-red" id="nb-alertas">0</span></button>
+      <div class="sb-label">Pessoas</div>
+      <button class="nav-item" onclick="navTo('socios',this)"><span class="ni">🤝</span>Sócios</button>
+      <button class="nav-item" onclick="navTo('motoristas',this)"><span class="ni">👤</span>Aprovação Motoristas <span class="nav-badge nb-yellow" id="nb-motor">0</span></button>
+      <div class="sb-label">Ferramentas</div>
+      <button class="nav-item" onclick="navTo('ia',this)"><span class="ni">🤖</span>Chatbot Ondrive</button>
+      <button class="nav-item" onclick="navTo('config',this)"><span class="ni">⚙️</span>Configurações</button>
+    </nav>
+
+    <main class="main anim" id="main-content"></main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAINEL MOTORISTA
+═══════════════════════════════════════ -->
+<div id="s-motor" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSBD()">☰</button>
+      <div class="topbar-logo">Ondrive</div>
+    </div>
+    <div class="topbar-right">
+      <div style="position:relative">
+        <div class="cal-btn" onclick="toggleCal()">📅 <span id="cal-date-m"></span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleIA()">🤖 IA</button>
+      <div class="user-avatar">M</div>
+      <button class="btn btn-ghost btn-sm" onclick="go('s-login')">Sair</button>
+    </div>
+  </div>
+  <div class="sb-overlay" id="sb-overlay-d" onclick="closeSBD()"></div>
+  <div class="app-layout">
+    <nav class="sidebar" id="sidebar-d">
+      <button class="nav-item active" onclick="navDrv('drv-inicio',this)"><span class="ni">🏠</span>Início</button>
+      <button class="nav-item" onclick="navDrv('drv-veiculo',this)"><span class="ni">🚗</span>Meu Veículo</button>
+      <button class="nav-item" onclick="navDrv('drv-pagamento',this)"><span class="ni">💳</span>Pagamento</button>
+      <button class="nav-item" onclick="navDrv('drv-vistoria',this)"><span class="ni">📅</span>Agendar Vistoria</button>
+      <button class="nav-item" onclick="navDrv('drv-contrato',this)"><span class="ni">📄</span>Meu Contrato</button>
+      <button class="nav-item" onclick="navDrv('drv-docs',this)"><span class="ni">🗂️</span>Meus Documentos</button>
+      <button class="nav-item" onclick="navDrv('drv-km',this)"><span class="ni">🛣️</span>Informar KM</button>
+      <button class="nav-item" onclick="navDrv('drv-multas',this)"><span class="ni">🚨</span>Multas</button>
+    </nav>
+    <main class="main anim" id="drv-content"></main>
+  </div>
+</div>
+
+<!-- IA FLOAT -->
+<button class="ia-float" id="ia-float-btn" onclick="toggleIA()" style="display:none">🤖</button>
+<div class="ia-panel" id="ia-panel">
+  <div class="ia-panel-header">
+    <span>🤖 Chatbot Ondrive</span>
+    <button class="btn btn-icon btn-sm" onclick="toggleIA()">✕</button>
+  </div>
+  <div class="ia-msgs" id="ia-msgs">
+    <div class="ia-msg-bot">Olá! Sou o assistente Ondrive. Posso ajudar com veículos, contratos, financeiro, alertas e muito mais. Como posso ajudar?</div>
+  </div>
+  <div class="ia-inp-row">
+    <input class="ia-inp" id="ia-input" placeholder="Pergunte qualquer coisa..." onkeydown="if(event.key==='Enter')sendIA()">
+    <button class="btn btn-accent btn-sm" onclick="sendIA()">→</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════
+var STATE = {
+  role: 'adm',
+  currentPage: 'inicio',
+  veiculos: [],
+  contratos: [],
+  motoristas: [],
+  socios: [],
+  financeiro: { lancamentos: [] },
+  alertas: [],
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(),
+  calSelected: new Date().getDate(),
+  iaOpen: false
+};
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  var el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = type === 'red' ? 'var(--red)' : type === 'green' ? 'var(--green)' : 'var(--border)';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+function copyText(txt) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt);
+  } else {
+    var el = document.createElement('textarea');
+    el.value = txt;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
+}
+
+function fmtMoney(n) { return 'R$\u00a0' + Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+function fmtNum(n) { return Number(n || 0).toLocaleString('pt-BR'); }
+function fmtDate(d) { if (!d) return '—'; var dt = new Date(d); return dt.toLocaleDateString('pt-BR'); }
+function today() { return new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+
+function setHTML(id, html) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = html;
+  el.classList.remove('anim');
+  void el.offsetWidth;
+  el.classList.add('anim');
+}
+
+// ═══════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════
+var currentRole = 'adm';
+
+function setRole(r) {
+  currentRole = r;
+  ['adm','socio','motor'].forEach(function(x) {
+    var el = document.getElementById('rt-' + x);
+    if (el) el.classList.toggle('active', x === r);
+  });
+}
+
+function doLogin() {
+  loginAs(currentRole);
+}
+
+function loginAs(role) {
+  STATE.role = role;
+  if (role === 'motor') {
+    go('s-motor');
+    renderDrv('drv-inicio');
+    document.getElementById('ia-float-btn').style.display = 'flex';
+    initCalDisplay('cal-date-m');
+  } else {
+    go('s-adm');
+    document.getElementById('topbar-av').textContent = role === 'adm' ? 'A' : 'S';
+    document.getElementById('topbar-name').textContent = role === 'adm' ? 'ADM' : 'Sócio';
+    document.getElementById('ia-float-btn').style.display = 'flex';
+    renderPage('inicio');
+    initCalDisplay('cal-date-display');
+    updateBadges();
+  }
+}
+
+function submitReg() {
+  go('s-pend');
+  showToast('Cadastro enviado com sucesso!', 'green');
+}
+
+// ═══════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════
+function toggleSB() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('open');
+}
+function closeSB() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('open');
+}
+function toggleSBD() {
+  document.getElementById('sidebar-d').classList.toggle('open');
+  document.getElementById('sb-overlay-d').classList.toggle('open');
+}
+function closeSBD() {
+  document.getElementById('sidebar-d').classList.remove('open');
+  document.getElementById('sb-overlay-d').classList.remove('open');
+}
+
+function navTo(page, el) {
+  document.querySelectorAll('#sidebar .nav-item').forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  STATE.currentPage = page;
+  renderPage(page);
+  closeSB();
+}
+
+function navDrv(page, el) {
+  document.querySelectorAll('#sidebar-d .nav-item').forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  renderDrv(page);
+  closeSBD();
+}
+
+function goBack() {
+  renderPage(STATE.currentPage || 'inicio');
+}
+
+function updateBadges() {
+  var nMotor = STATE.motoristas.filter(function(m) { return m.status === 'pendente'; }).length;
+  var nAlerts = STATE.alertas.filter(function(a) { return !a.lido; }).length;
+  var nbM = document.getElementById('nb-motor');
+  var nbA = document.getElementById('nb-alertas');
+  if (nbM) nbM.textContent = nMotor;
+  if (nbA) nbA.textContent = nAlerts;
+}
+
+// ═══════════════════════════════════════════
+// CALENDÁRIO
+// ═══════════════════════════════════════════
+function initCalDisplay(targetId) {
+  var el = document.getElementById(targetId);
+  if (el) el.textContent = new Date().toLocaleDateString('pt-BR');
+}
+
+function toggleCal() {
+  var dd = document.getElementById('cal-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) renderCalendar();
+}
+
+function renderCalendar() {
+  var grid = document.getElementById('cal-grid');
+  var title = document.getElementById('cal-month-title');
+  if (!grid || !title) return;
+  var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  title.textContent = meses[STATE.calMonth] + ' ' + STATE.calYear;
+  var d1 = new Date(STATE.calYear, STATE.calMonth, 1);
+  var dN = new Date(STATE.calYear, STATE.calMonth + 1, 0);
+  var hoje = new Date();
+  var html = '';
+  for (var i = 0; i < d1.getDay(); i++) html += '<div></div>';
+  for (var d = 1; d <= dN.getDate(); d++) {
+    var isToday = d === hoje.getDate() && STATE.calMonth === hoje.getMonth() && STATE.calYear === hoje.getFullYear();
+    var isSel   = d === STATE.calSelected;
+    var cls = 'cal-day';
+    if (isToday) cls += ' today';
+    else if (isSel) cls += ' selected';
+    // Check events
+    var hasEv = STATE.contratos.some(function(c) { return c.vencimento && new Date(c.vencimento).getDate() === d && new Date(c.vencimento).getMonth() === STATE.calMonth; });
+    if (hasEv) cls += ' has-event';
+    html += '<div class="' + cls + '" onclick="selectDay(' + d + ')">' + d + '</div>';
+  }
+  grid.innerHTML = html;
+  updateCalEvents();
+}
+
+function moveCal(dir) {
+  STATE.calMonth += dir;
+  if (STATE.calMonth < 0) { STATE.calMonth = 11; STATE.calYear--; }
+  if (STATE.calMonth > 11) { STATE.calMonth = 0; STATE.calYear++; }
+  renderCalendar();
+}
+
+function selectDay(d) {
+  STATE.calSelected = d;
+  var el = document.getElementById('cal-date-display');
+  if (el) el.textContent = d + '/' + (STATE.calMonth + 1) + '/' + STATE.calYear;
+  renderCalendar();
+  updateCalEvents();
+}
+
+function updateCalEvents() {
+  var box = document.getElementById('cal-events-today');
+  if (!box) return;
+  var evts = STATE.contratos.filter(function(c) {
+    if (!c.vencimento) return false;
+    var dt = new Date(c.vencimento);
+    return dt.getDate() === STATE.calSelected && dt.getMonth() === STATE.calMonth;
+  });
+  if (evts.length === 0) { box.innerHTML = '<span class="t-xs t-m">Sem eventos neste dia</span>'; return; }
+  box.innerHTML = evts.map(function(e) {
+    return '<div class="t-xs" style="margin-top:4px"><span style="color:var(--yellow)">💳</span> Venc. contrato — ' + (e.motoristaNome || 'Motorista') + '</div>';
+  }).join('');
+}
+
+// Click outside calendar
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('cal-dropdown');
+  var tg = document.getElementById('cal-trigger');
+  if (dd && !dd.contains(e.target) && tg && !tg.contains(e.target)) {
+    dd.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════
+// IA CHATBOT
+// ═══════════════════════════════════════════
+function toggleIA() {
+  var panel = document.getElementById('ia-panel');
+  STATE.iaOpen = !STATE.iaOpen;
+  if (STATE.iaOpen) { panel.classList.add('open'); }
+  else { panel.classList.remove('open'); }
+}
+
+function sendIA() {
+  var inp = document.getElementById('ia-input');
+  var msg = inp ? inp.value.trim() : '';
+  if (!msg) return;
+  if (inp) inp.value = '';
+  appendIAMsg(msg, 'user');
+  setTimeout(function() { appendIAMsg(iaRespond(msg), 'bot'); }, 600);
+}
+
+function appendIAMsg(msg, type) {
+  var box = document.getElementById('ia-msgs');
+  if (!box) return;
+  var div = document.createElement('div');
+  div.className = type === 'user' ? 'ia-msg-user' : 'ia-msg-bot';
+  div.innerHTML = msg.replace(/\n/g, '<br>');
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function iaRespond(msg) {
+  var ml = msg.toLowerCase();
+  var nV = STATE.veiculos.length;
+  var nC = STATE.contratos.length;
+  var nAtr = STATE.contratos.filter(function(c) { return c.atraso > 0; }).length;
+  var totalRec = STATE.financeiro.lancamentos.filter(function(l) { return l.tipo === 'receita'; }).reduce(function(s, l) { return s + (l.valor || 0); }, 0);
+  var totalGas = STATE.financeiro.lancamentos.filter(function(l) { return l.tipo === 'despesa'; }).reduce(function(s, l) { return s + (l.valor || 0); }, 0);
+
+  if (ml.indexOf('veículo') !== -1 || ml.indexOf('veiculo') !== -1 || ml.indexOf('carro') !== -1) {
+    return 'Você tem ' + nV + ' veículo(s) cadastrado(s). ' + STATE.veiculos.filter(function(v){return v.status==='alugado';}).length + ' alugado(s), ' + STATE.veiculos.filter(function(v){return v.status==='disponivel';}).length + ' disponível(is).';
+  }
+  if (ml.indexOf('contrato') !== -1) {
+    return 'Total de ' + nC + ' contrato(s) cadastrado(s). ' + nAtr + ' em atraso.';
+  }
+  if (ml.indexOf('receita') !== -1 || ml.indexOf('financeiro') !== -1 || ml.indexOf('dinheiro') !== -1) {
+    return 'Receita total: ' + fmtMoney(totalRec) + '\nDespesas: ' + fmtMoney(totalGas) + '\nLucro: ' + fmtMoney(totalRec - totalGas);
+  }
+  if (ml.indexOf('atraso') !== -1 || ml.indexOf('inadimpl') !== -1) {
+    return nAtr + ' contrato(s) em atraso. ' + (nAtr > 0 ? 'Verifique a aba Alertas.' : 'Tudo em dia!');
+  }
+  if (ml.indexOf('alerta') !== -1) {
+    return 'Você tem ' + STATE.alertas.filter(function(a){return !a.lido;}).length + ' alerta(s) não lido(s). Acesse a aba Alertas para detalhes.';
+  }
+  if (ml.indexOf('score') !== -1) {
+    return 'O score é calculado com base em:\n• Pontuação da CNH\n• Histórico de multas\n• Avaliação nos apps\n• Tempo de CNH\n\nAcesse Aprovação de Motoristas para ver detalhes.';
+  }
+  if (ml.indexOf('sócio') !== -1 || ml.indexOf('socio') !== -1 || ml.indexOf('repasse') !== -1) {
+    return 'Para ver o repasse ao sócio, acesse:\n• Financeiro → aba Sócios\n\nO repasse é calculado automaticamente com base nas regras do contrato.';
+  }
+  if (ml.indexOf('multa') !== -1) {
+    return 'Para consultar multas, acesse:\n• Veículos → ficha do veículo → aba Multas\n• Ou use "Nova Consulta" na aba Multas do menu';
+  }
+  if (ml.indexOf('revisão') !== -1 || ml.indexOf('revisao') !== -1) {
+    var rev = STATE.veiculos.filter(function(v) { return v.proximaRevisao; });
+    return rev.length > 0 ? rev.length + ' veículo(s) com revisão próxima. Verifique os alertas.' : 'Nenhuma revisão imediata prevista.';
+  }
+  if (ml.indexOf('olá') !== -1 || ml.indexOf('ola') !== -1 || ml.indexOf('oi') !== -1) {
+    return 'Olá! Posso ajudar com:\n• Veículos e status\n• Contratos e atrasos\n• Financeiro e repasses\n• Alertas e multas\n• Score de motoristas';
+  }
+  return 'Entendi! Pode me perguntar sobre veículos, contratos, financeiro, alertas, multas, score de motoristas ou qualquer aspecto da gestão da frota.';
+}
+
+// ═══════════════════════════════════════════
+// MODAIS
+// ═══════════════════════════════════════════
+function openModal(html) {
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modal-overlay';
+  overlay.innerHTML = '<div class="modal anim">' + html + '</div>';
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+  document.body.appendChild(overlay);
+}
+
+function closeModal() {
+  var ov = document.getElementById('modal-overlay');
+  if (ov) ov.remove();
+}
+
+// ═══════════════════════════════════════════
+// UPLOAD
+// ═══════════════════════════════════════════
+function handleFile(event, dzId) {
+  var files = event.target.files;
+  if (!files || !files.length) return;
+  var dz = document.getElementById(dzId);
+  if (!dz) return;
+  var list = dz.querySelector('.file-list');
+  if (!list) { list = document.createElement('div'); list.className = 'file-list'; dz.appendChild(list); }
+  Array.from(files).forEach(function(f) {
+    var item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = '<span>📎 ' + f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)</span><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>';
+    list.appendChild(item);
+  });
+  showToast(files.length + ' arquivo(s) adicionado(s)!', 'green');
+}
+
+// Drag & drop
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.dropzone').forEach(function(dz) {
+    dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+    dz.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      var inp = dz.querySelector('input[type=file]');
+      if (inp && e.dataTransfer.files.length) {
+        var evt = { target: { files: e.dataTransfer.files } };
+        handleFile(evt, dz.id);
+      }
+    });
+  });
+});
+
+// ═══════════════════════════════════════════
+// PÁGINAS ADM
+// ═══════════════════════════════════════════
+function renderPage(page) {
+  var pages = {
+    'inicio':      pageInicio,
+    'dashboard':   pageDashboard,
+    'veiculos':    pageVeiculos,
+    'contratos':   pageContratos,
+    'financeiro':  pageFinanceiro,
+    'alertas':     pageAlertas,
+    'socios':      pageSocios,
+    'motoristas':  pageMotoristas,
+    'ia':          pageIA,
+    'config':      pageConfig
+  };
+  var fn = pages[page] || pageInicio;
+  setHTML('main-content', fn());
+  initPageScripts(page);
+}
+
+function initPageScripts(page) {
+  if (page === 'dashboard') {
+    setTimeout(drawCharts, 100);
+  }
+}
+
+// ─── INÍCIO ───
+function pageInicio() {
+  var html = '';
+  html += '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>🏠 Início</h1><p>' + today() + '</p></div><button class="btn btn-accent btn-sm" onclick="renderPage(\'dashboard\')">Ver Dashboard completo →</button></div></div>';
+
+  // Alertas prioritários
+  html += '<div class="g2c mb4">';
+  html += '<div>';
+  html += '<div class="section-title">⚡ Alertas Prioritários</div>';
+
+  var aItems = [
+    { cls:'a-red',    icon:'🔒', title:'Bloqueio pendente', desc:'1 veículo com 2+ dias de atraso precisa ser bloqueado', page:'alertas', badge:'URGENTE', badgeCls:'b-red' },
+    { cls:'a-yellow', icon:'💳', title:'Pagamentos próximos', desc:'3 contratos vencem em até 5 dias', page:'contratos', badge:'ATENÇÃO', badgeCls:'b-yellow' },
+    { cls:'a-orange', icon:'🔧', title:'Revisão próxima', desc:'2 veículos com revisão a marcar', page:'veiculos', badge:'PENDENTE', badgeCls:'b-orange' },
+    { cls:'a-red',    icon:'🚨', title:'Multas pendentes', desc:'1 nova multa detectada no sistema', page:'veiculos', badge:'NOVO', badgeCls:'b-red' },
+    { cls:'a-blue',   icon:'👤', title:'Motoristas aguardando', desc:'3 cadastros aguardando aprovação', page:'motoristas', badge:'3', badgeCls:'b-blue' },
+    { cls:'a-yellow', icon:'📍', title:'KM não informado', desc:'2 motoristas não informaram KM do mês', page:'veiculos', badge:'PENDENTE', badgeCls:'b-yellow' }
+  ];
+
+  aItems.forEach(function(a) {
+    html += '<div class="alert-item ' + a.cls + '" onclick="navTo(\'' + a.page + '\',null)">';
+    html += '<span class="alert-icon">' + a.icon + '</span>';
+    html += '<div class="alert-content"><div class="alert-title">' + a.title + '</div><div class="alert-desc">' + a.desc + '</div></div>';
+    html += '<span class="badge ' + a.badgeCls + '" style="flex-shrink:0">' + a.badge + '</span>';
+    html += '</div>';
+  });
+
+  html += '</div>';
+
+  // Mini stats
+  html += '<div>';
+  html += '<div class="section-title">📊 Resumo do Dia</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">';
+  html += '<div class="stat s-blue"><div class="stat-icon">🚗</div><div class="stat-val">' + STATE.veiculos.length + '</div><div class="stat-label">Veículos</div></div>';
+  html += '<div class="stat s-green"><div class="stat-icon">📄</div><div class="stat-val">' + STATE.contratos.length + '</div><div class="stat-label">Contratos</div></div>';
+  html += '<div class="stat s-yellow"><div class="stat-icon">💰</div><div class="stat-val">R$ —</div><div class="stat-label">Receita mês</div></div>';
+  html += '<div class="stat s-red"><div class="stat-icon">⚠️</div><div class="stat-val">0</div><div class="stat-label">Em atraso</div></div>';
+  html += '</div>';
+
+  html += '<div class="card mb3"><div class="section-title">🚀 Ações rápidas</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px">';
+  html += '<button class="btn btn-ghost" style="justify-content:flex-start" onclick="openModalAddVeiculo()">➕ Cadastrar veículo</button>';
+  html += '<button class="btn btn-ghost" style="justify-content:flex-start" onclick="openModalAddContrato()">➕ Novo contrato</button>';
+  html += '<button class="btn btn-ghost" style="justify-content:flex-start" onclick="navTo(\'motoristas\',null)">👤 Aprovar motoristas</button>';
+  html += '<button class="btn btn-ghost" style="justify-content:flex-start" onclick="navTo(\'financeiro\',null)">💰 Lançar financeiro</button>';
+  html += '</div></div>';
+
+  html += '<div class="card"><div class="section-title">📅 Próximos vencimentos</div>';
+  if (STATE.contratos.length === 0) {
+    html += '<div class="t-xs t-m" style="text-align:center;padding:16px">Nenhum contrato cadastrado ainda</div>';
+  }
+  html += '</div>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+// ─── DASHBOARD ───
+function pageDashboard() {
+  var totalRec  = STATE.financeiro.lancamentos.filter(function(l){return l.tipo==='receita';}).reduce(function(s,l){return s+(l.valor||0);},0);
+  var totalGas  = STATE.financeiro.lancamentos.filter(function(l){return l.tipo==='despesa';}).reduce(function(s,l){return s+(l.valor||0);},0);
+  var lucro     = totalRec - totalGas;
+  var alugados  = STATE.veiculos.filter(function(v){return v.status==='alugado';}).length;
+  var vendAlug  = STATE.veiculos.filter(function(v){return v.status==='vendido_aluguel';}).length;
+  var disponiveis = STATE.veiculos.filter(function(v){return v.status==='disponivel';}).length;
+  var contAtivos = STATE.contratos.filter(function(c){return c.status==='ativo';}).length;
+  var contAtr   = STATE.contratos.filter(function(c){return c.atraso>0;}).length;
+
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>📊 Dashboard</h1><p>Painel executivo de gestão</p></div>';
+  html += '<select style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:6px 12px;color:var(--text);font-size:12px" onchange="showToast(\'Período alterado: \'+this.value)">';
+  html += '<option>Mês atual</option><option>Últimos 30 dias</option><option>Últimos 60 dias</option><option>Últimos 90 dias</option></select></div></div>';
+
+  // KPIs
+  html += '<div class="stat-grid mb4">';
+  html += '<div class="stat s-green"><div class="stat-icon">💰</div><div class="stat-val">' + fmtMoney(totalRec) + '</div><div class="stat-label">Receita Total</div></div>';
+  html += '<div class="stat s-red"><div class="stat-icon">📉</div><div class="stat-val">' + fmtMoney(totalGas) + '</div><div class="stat-label">Gastos Totais</div></div>';
+  html += '<div class="stat s-blue"><div class="stat-icon">📈</div><div class="stat-val">' + fmtMoney(lucro) + '</div><div class="stat-label">Lucro Líquido</div></div>';
+  html += '<div class="stat s-purple"><div class="stat-icon">🚗</div><div class="stat-val">' + STATE.veiculos.length + '</div><div class="stat-label">Total Veículos</div></div>';
+  html += '<div class="stat s-blue"><div class="stat-icon">✅</div><div class="stat-val">' + alugados + '</div><div class="stat-label">Alugados</div></div>';
+  html += '<div class="stat s-orange"><div class="stat-icon">🏷️</div><div class="stat-val">' + vendAlug + '</div><div class="stat-label">Vendidos/Aluguel</div></div>';
+  html += '<div class="stat s-green"><div class="stat-icon">🅿️</div><div class="stat-val">' + disponiveis + '</div><div class="stat-label">Disponíveis</div></div>';
+  html += '<div class="stat s-yellow"><div class="stat-icon">📄</div><div class="stat-val">' + contAtivos + '</div><div class="stat-label">Contratos Ativos</div></div>';
+  html += '<div class="stat s-red"><div class="stat-icon">⏰</div><div class="stat-val">' + contAtr + '</div><div class="stat-label">Em Atraso</div></div>';
+  html += '</div>';
+
+  // Projeções
+  html += '<div class="section-title mb3">🔮 Projeções de Recebimentos</div>';
+  html += '<div style="display:flex;gap:6px;margin-bottom:12px">';
+  ['15 dias','30 dias','60 dias','90 dias'].forEach(function(p) {
+    html += '<button class="btn btn-ghost btn-sm" onclick="showToast(\'Projeção de '+p+' selecionada\')">' + p + '</button>';
+  });
+  html += '</div>';
+  html += '<div class="g2c mb4">';
+  html += '<div class="card"><div class="section-title">Recebimentos previstos</div>';
+  html += '<div class="f ic jb mb2"><span class="t-xs t-m">15 dias</span><span class="txt-green fw7">' + fmtMoney(0) + '</span></div>';
+  html += '<div class="f ic jb mb2"><span class="t-xs t-m">30 dias</span><span class="txt-green fw7">' + fmtMoney(0) + '</span></div>';
+  html += '<div class="f ic jb mb2"><span class="t-xs t-m">60 dias</span><span class="txt-green fw7">' + fmtMoney(0) + '</span></div>';
+  html += '<div class="f ic jb"><span class="t-xs t-m">90 dias</span><span class="txt-green fw7">' + fmtMoney(0) + '</span></div>';
+  html += '</div>';
+  html += '<div class="card"><div class="section-title">Gastos previstos</div>';
+  html += '<div class="f ic jb mb2"><span class="t-xs t-m">15 dias</span><span class="txt-red fw7">' + fmtMoney(0) + '</span></div>';
+  html += '<div class="f ic jb mb2"><span class="t-xs t-m">30 dias</span><span class="txt-red fw7">' + fmtMoney(0) + '</span></div>';
+  html += '<div class="f ic jb mb2"><span class="t-xs t-m">60 dias</span><span class="txt-red fw7">' + fmtMoney(0) + '</span></div>';
+  html += '<div class="f ic jb"><span class="t-xs t-m">90 dias</span><span class="txt-red fw7">' + fmtMoney(0) + '</span></div>';
+  html += '</div></div>';
+
+  // Divisão financeira
+  html += '<div class="card mb4"><div class="section-title">💼 Divisão Financeira</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">';
+  html += '<div style="text-align:center;padding:14px;background:var(--bg2);border-radius:var(--rs)"><div class="t-xs t-m">Bruto recebido</div><div class="fw7 txt-green" style="font-size:18px;margin-top:4px">' + fmtMoney(totalRec) + '</div></div>';
+  html += '<div style="text-align:center;padding:14px;background:var(--bg2);border-radius:var(--rs)"><div class="t-xs t-m">Gastos descontados</div><div class="fw7 txt-red" style="font-size:18px;margin-top:4px">- ' + fmtMoney(totalGas) + '</div></div>';
+  html += '<div style="text-align:center;padding:14px;background:var(--bg2);border-radius:var(--rs)"><div class="t-xs t-m">Lucro líquido</div><div class="fw7 txt-accent" style="font-size:18px;margin-top:4px">' + fmtMoney(lucro) + '</div></div>';
+  html += '<div style="text-align:center;padding:14px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:var(--rs)"><div class="t-xs t-m">Fica comigo (ADM)</div><div class="fw7 txt-accent" style="font-size:18px;margin-top:4px">' + fmtMoney(lucro * 0.5) + '</div></div>';
+  html += '<div style="text-align:center;padding:14px;background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.2);border-radius:var(--rs)"><div class="t-xs t-m">Vai para sócio</div><div class="fw7 txt-green" style="font-size:18px;margin-top:4px">' + fmtMoney(lucro * 0.5) + '</div></div>';
+  html += '</div></div>';
+
+  // Gráficos
+  html += '<div class="g2c mb4">';
+  html += '<div class="card"><div class="section-title mb3">Receita vs Gastos (6 meses)</div><canvas id="chart-rec" width="340" height="180"></canvas></div>';
+  html += '<div class="card"><div class="section-title mb3">Status dos Veículos</div><canvas id="chart-status" width="340" height="180"></canvas></div>';
+  html += '</div>';
+
+  return html;
+}
+
+function drawCharts() {
+  // Gráfico receita vs gastos
+  var c1 = document.getElementById('chart-rec');
+  if (c1) {
+    var ctx = c1.getContext('2d');
+    var W = c1.width, H = c1.height;
+    var meses = ['Nov','Dez','Jan','Fev','Mar','Abr'];
+    var rec  = [0,0,0,0,0,0];
+    var gas  = [0,0,0,0,0,0];
+    var maxV = 1;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#111520';
+    ctx.fillRect(0, 0, W, H);
+    var pad = 36, barW = (W - pad * 2) / meses.length / 3;
+    meses.forEach(function(m, i) {
+      var x = pad + i * (W - pad * 2) / meses.length;
+      var hR = maxV > 0 ? (rec[i] / maxV) * (H - 50) : 4;
+      var hG = maxV > 0 ? (gas[i] / maxV) * (H - 50) : 4;
+      ctx.fillStyle = '#00d4ff';
+      ctx.fillRect(x, H - 24 - hR, barW, hR || 4);
+      ctx.fillStyle = '#ff3d3d';
+      ctx.fillRect(x + barW + 2, H - 24 - hG, barW, hG || 4);
+      ctx.fillStyle = '#3d4e63';
+      ctx.font = '10px Sora, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(m, x + barW, H - 8);
+    });
+    ctx.fillStyle = '#7a8ba0';
+    ctx.font = '9px Sora, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Adicione lançamentos para ver o gráfico', pad, H / 2);
+  }
+
+  // Gráfico status veículos
+  var c2 = document.getElementById('chart-status');
+  if (c2) {
+    var ctx2 = c2.getContext('2d');
+    var W2 = c2.width, H2 = c2.height;
+    ctx2.clearRect(0, 0, W2, H2);
+    ctx2.fillStyle = '#111520';
+    ctx2.fillRect(0, 0, W2, H2);
+    if (STATE.veiculos.length === 0) {
+      ctx2.fillStyle = '#3d4e63';
+      ctx2.font = '11px Sora, sans-serif';
+      ctx2.textAlign = 'center';
+      ctx2.fillText('Cadastre veículos para ver o gráfico', W2 / 2, H2 / 2);
+      return;
+    }
+    var dados = [
+      { label:'Alugado',      n:STATE.veiculos.filter(function(v){return v.status==='alugado';}).length,         cor:'#00d4ff' },
+      { label:'Disponível',   n:STATE.veiculos.filter(function(v){return v.status==='disponivel';}).length,      cor:'#00e676' },
+      { label:'Venda/Alug',   n:STATE.veiculos.filter(function(v){return v.status==='vendido_aluguel';}).length, cor:'#ffb300' },
+      { label:'Revisão',      n:STATE.veiculos.filter(function(v){return v.status==='revisao';}).length,         cor:'#ff6d00' },
+      { label:'Bloqueado',    n:STATE.veiculos.filter(function(v){return v.status==='bloqueado';}).length,       cor:'#ff3d3d' },
+      { label:'Inativo',      n:STATE.veiculos.filter(function(v){return v.status==='inativo';}).length,         cor:'#3d4e63' }
+    ];
+    var total2 = STATE.veiculos.length;
+    var cx = W2 * 0.35, cy = H2 / 2, r = Math.min(cy, cx) - 10;
+    var ang = -Math.PI / 2;
+    dados.forEach(function(d) {
+      if (!d.n) return;
+      var slice = (d.n / total2) * Math.PI * 2;
+      ctx2.beginPath();
+      ctx2.moveTo(cx, cy);
+      ctx2.arc(cx, cy, r, ang, ang + slice);
+      ctx2.closePath();
+      ctx2.fillStyle = d.cor;
+      ctx2.fill();
+      ctx2.strokeStyle = '#111520';
+      ctx2.lineWidth = 2;
+      ctx2.stroke();
+      ang += slice;
+    });
+    var lx = W2 * 0.68, ly = 20;
+    dados.forEach(function(d) {
+      ctx2.fillStyle = d.cor;
+      ctx2.fillRect(lx, ly, 10, 10);
+      ctx2.fillStyle = '#7a8ba0';
+      ctx2.font = '10px Sora';
+      ctx2.textAlign = 'left';
+      ctx2.fillText(d.label + ' (' + d.n + ')', lx + 14, ly + 9);
+      ly += 18;
+    });
+  }
+}
+
+// ─── VEÍCULOS ───
+var VEHICLE_STATUS = {
+  'disponivel':       { label:'Disponível',                cor:'b-green',  badge:'🟢' },
+  'alugado':          { label:'Alugado',                   cor:'b-blue',   badge:'🔵' },
+  'vendido_aluguel':  { label:'Venda em Aluguel',          cor:'b-purple', badge:'🟣' },
+  'revisao':          { label:'Em Revisão',                cor:'b-orange', badge:'🟠' },
+  'bloqueado':        { label:'Bloqueado',                 cor:'b-red',    badge:'🔴' },
+  'inativo':          { label:'Inativo',                   cor:'b-gray',   badge:'⚫' }
+};
+
+var BLOCK_REASONS = [
+  'Atraso no pagamento',
+  'Em revisão preventiva',
+  'Funilaria / lataria',
+  'Reparo de avaria',
+  'Em preparação para locação',
+  'Em preparação para venda em aluguel',
+  'Sinistro / seguro',
+  'Documentação pendente',
+  'Outro motivo'
+];
+
+function pageVeiculos() {
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>🚗 Veículos</h1><p>' + STATE.veiculos.length + ' veículo(s) cadastrado(s)</p></div>';
+  html += '<button class="btn btn-accent" onclick="openModalAddVeiculo()">➕ Cadastrar Veículo</button></div></div>';
+
+  // Filtros
+  html += '<div class="f ic fw g2 mb4">';
+  html += '<select style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:6px 10px;color:var(--text);font-size:11px" id="filter-status" onchange="filterVeiculos()"><option value="">Todos os status</option>';
+  Object.keys(VEHICLE_STATUS).forEach(function(k) { html += '<option value="' + k + '">' + VEHICLE_STATUS[k].label + '</option>'; });
+  html += '</select>';
+  html += '<select style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:6px 10px;color:var(--text);font-size:11px" id="filter-socio" onchange="filterVeiculos()"><option value="">Todos os sócios</option></select>';
+  html += '<input placeholder="Pesquisar placa/modelo..." id="filter-search" oninput="filterVeiculos()" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:6px 10px;color:var(--text);font-size:11px;width:180px">';
+  html += '</div>';
+
+  if (STATE.veiculos.length === 0) {
+    html += '<div class="card" style="text-align:center;padding:48px">';
+    html += '<div style="font-size:48px;margin-bottom:16px">🚗</div>';
+    html += '<div class="fw7 mb2">Nenhum veículo cadastrado</div>';
+    html += '<p class="t-xs t-m mb4">Cadastre seu primeiro veículo para começar</p>';
+    html += '<button class="btn btn-accent" onclick="openModalAddVeiculo()">➕ Cadastrar primeiro veículo</button>';
+    html += '</div>';
+  } else {
+    html += '<div id="veiculos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">';
+    STATE.veiculos.forEach(function(v, i) {
+      html += renderVehicleCard(v, i);
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderVehicleCard(v, i) {
+  var st = VEHICLE_STATUS[v.status] || VEHICLE_STATUS['disponivel'];
+  var html = '<div class="vehicle-card" onclick="openVehicleDetail(' + i + ')">';
+  html += '<div class="vehicle-card-header">';
+  html += '<span style="font-size:52px">' + (v.emoji || '🚗') + '</span>';
+  html += '<div class="vehicle-status"><span class="badge ' + st.cor + '">' + st.badge + ' ' + st.label + '</span></div>';
+  if (v.status === 'bloqueado' && v.motivoBloqueio) {
+    html += '<div style="position:absolute;bottom:6px;left:6px;background:rgba(255,61,61,.9);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700">🔒 ' + v.motivoBloqueio + '</div>';
+  }
+  html += '</div>';
+  html += '<div class="vehicle-card-body">';
+  html += '<div class="fw7 mb1">' + (v.modelo || 'Modelo') + ' ' + (v.ano || '') + '</div>';
+  html += '<div class="t-xs t-m mb2 mono">' + (v.placa || 'Placa') + '</div>';
+  html += '<div class="t-xs t-m">' + (v.motoristaNome ? '👤 ' + v.motoristaNome : 'Sem motorista') + '</div>';
+  html += '<div class="t-xs t-m">🛣️ ' + fmtNum(v.km || 0) + ' km</div>';
+  if (v.atraso && v.atraso > 0) {
+    var atrClass = v.atraso >= 2 ? 'b-red' : 'b-yellow';
+    html += '<div class="mt2"><span class="badge ' + atrClass + '">' + (v.atraso >= 2 ? '⛔ ' : '⚠️ ') + v.atraso + ' dia(s) atraso no pagamento</span>';
+    if (v.atraso >= 2) html += ' <span class="badge b-red" style="cursor:pointer" onclick="event.stopPropagation();bloquearVeiculo(' + i + ')">🔒 Bloquear</span>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function filterVeiculos() {
+  var fs  = document.getElementById('filter-status');
+  var ft  = document.getElementById('filter-search');
+  var fso = document.getElementById('filter-socio');
+  var statusF = fs ? fs.value : '';
+  var searchF = ft ? ft.value.toLowerCase() : '';
+  var socioF  = fso ? fso.value : '';
+  var grid = document.getElementById('veiculos-grid');
+  if (!grid) return;
+  var filtered = STATE.veiculos.filter(function(v, i) {
+    var okStatus = !statusF || v.status === statusF;
+    var okSearch = !searchF || (v.placa && v.placa.toLowerCase().indexOf(searchF) !== -1) || (v.modelo && v.modelo.toLowerCase().indexOf(searchF) !== -1);
+    var okSocio  = !socioF  || v.socioId === socioF;
+    return okStatus && okSearch && okSocio;
+  });
+  grid.innerHTML = filtered.length === 0
+    ? '<div class="t-xs t-m" style="grid-column:1/-1;text-align:center;padding:32px">Nenhum veículo encontrado com os filtros aplicados</div>'
+    : filtered.map(function(v) { return renderVehicleCard(v, STATE.veiculos.indexOf(v)); }).join('');
+}
+
+function bloquearVeiculo(i) {
+  var v = STATE.veiculos[i];
+  if (!v) return;
+  var opts = BLOCK_REASONS.map(function(r, idx) {
+    return '<option value="' + r + '">' + r + '</option>';
+  }).join('');
+  openModal(
+    '<div class="modal-title">🔒 Bloquear Veículo — ' + (v.placa || '') + '<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="alert-item a-red mb3"><span class="alert-icon">⚠️</span><div class="alert-content"><div class="alert-title">Ação irreversível sem desbloqueio manual</div><div class="alert-desc">O motorista será notificado via WhatsApp e o contrato será sinalizado como rescindido após 3 dias.</div></div></div>' +
+    '<div class="fg"><label>Motivo do bloqueio</label><select id="block-reason"><option value="">Selecione o motivo</option>' + opts + '</select></div>' +
+    '<div class="fg"><label>Observação adicional</label><textarea id="block-obs" placeholder="Descreva detalhes adicionais..."></textarea></div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-danger" onclick="confirmBloquear(' + i + ')">🔒 Confirmar Bloqueio</button></div>'
+  );
+}
+
+function confirmBloquear(i) {
+  var reason = document.getElementById('block-reason');
+  var obs    = document.getElementById('block-obs');
+  if (!reason || !reason.value) { showToast('Selecione o motivo do bloqueio', 'red'); return; }
+  STATE.veiculos[i].status = 'bloqueado';
+  STATE.veiculos[i].motivoBloqueio = reason.value;
+  STATE.veiculos[i].obsBloquio = obs ? obs.value : '';
+  closeModal();
+  showToast('Veículo bloqueado! Motorista será notificado.', 'green');
+  renderPage('veiculos');
+}
+
+function openVehicleDetail(i) {
+  var v = STATE.veiculos[i];
+  if (!v) return;
+  var st = VEHICLE_STATUS[v.status] || VEHICLE_STATUS['disponivel'];
+  var html = '<div class="modal-title">🚗 ' + (v.modelo || 'Veículo') + ' — ' + (v.placa || '') + '<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>';
+
+  html += '<div class="tabs mb3">';
+  html += '<button class="tab-btn active" onclick="showVTab(this,\'vt-geral\')">Geral</button>';
+  html += '<button class="tab-btn" onclick="showVTab(this,\'vt-docs\')">Docs & Fotos</button>';
+  html += '<button class="tab-btn" onclick="showVTab(this,\'vt-multas\')">Multas</button>';
+  html += '<button class="tab-btn" onclick="showVTab(this,\'vt-manut\')">Manutenção</button>';
+  if (v.motoristaNome) html += '<button class="tab-btn" onclick="showVTab(this,\'vt-motor\')">Motorista</button>';
+  html += '</div>';
+
+  // Tab Geral
+  html += '<div id="vt-geral">';
+  html += '<div class="r2 mb3">';
+  html += '<div><div class="t-xs t-m">Status</div><div class="mt2"><span class="badge ' + st.cor + '">' + st.badge + ' ' + st.label + '</span></div></div>';
+  html += '<div><div class="t-xs t-m">Placa</div><div class="fw7 mono mt2">' + (v.placa || '—') + '</div></div>';
+  html += '</div>';
+  html += '<div class="r3 mb3">';
+  html += '<div><div class="t-xs t-m">Modelo</div><div class="t-sm fw7 mt2">' + (v.modelo || '—') + '</div></div>';
+  html += '<div><div class="t-xs t-m">Marca</div><div class="t-sm mt2">' + (v.marca || '—') + '</div></div>';
+  html += '<div><div class="t-xs t-m">Ano</div><div class="t-sm mt2">' + (v.ano || '—') + '</div></div>';
+  html += '</div>';
+  html += '<div class="r3 mb3">';
+  html += '<div><div class="t-xs t-m">KM Atual</div><div class="t-sm fw7 mt2">' + fmtNum(v.km || 0) + ' km</div></div>';
+  html += '<div><div class="t-xs t-m">Próxima Revisão</div><div class="t-sm mt2">' + (v.proximaRevisao ? fmtDate(v.proximaRevisao) : '—') + '</div></div>';
+  html += '<div><div class="t-xs t-m">Seguro</div><div class="t-sm mt2">' + fmtMoney(v.seguro || 0) + '</div></div>';
+  html += '</div>';
+  html += '<div class="r2 mb3">';
+  html += '<div><div class="t-xs t-m">Rastreador</div><div class="t-sm mt2">' + fmtMoney(v.rastreador || 0) + '</div></div>';
+  html += '<div><div class="t-xs t-m">Sócio responsável</div><div class="t-sm mt2">' + (v.socioNome || '—') + '</div></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // Tab Docs
+  html += '<div id="vt-docs" style="display:none">';
+  html += '<div class="r2 mb3">';
+  html += '<div><div class="t-xs t-m mb2">Fotos do veículo</div>';
+  html += '<div class="dropzone" id="dz-vfoto"><input type="file" accept="image/*" multiple onchange="handleFile(event,\'dz-vfoto\')"><div class="dz-icon">📸</div><p><strong>Clique ou arraste</strong><br>Fotos do veículo</p></div></div>';
+  html += '<div><div class="t-xs t-m mb2">Documentos (CRLV, seguro...)</div>';
+  html += '<div class="dropzone" id="dz-vdoc"><input type="file" accept="image/*,.pdf" multiple onchange="handleFile(event,\'dz-vdoc\')"><div class="dz-icon">📄</div><p><strong>Clique ou arraste</strong><br>PDF ou imagem</p></div></div>';
+  html += '</div></div>';
+
+  // Tab Multas
+  html += '<div id="vt-multas" style="display:none">';
+  html += '<div class="f ic jb mb3"><div class="t-xs t-m">Multas registradas para este veículo</div><button class="btn btn-ghost btn-sm" onclick="showToast(\'Consultando DETRAN...\')">🔍 Nova Consulta</button></div>';
+  html += '<div style="text-align:center;padding:24px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">✅</div><div class="t-xs">Nenhuma multa registrada</div></div>';
+  html += '</div>';
+
+  // Tab Manutenção
+  html += '<div id="vt-manut" style="display:none">';
+  html += '<div class="f ic jb mb3"><div class="t-xs t-m">Histórico de manutenções</div><button class="btn btn-ghost btn-sm" onclick="openModalAddManutencao(' + i + ')">➕ Registrar</button></div>';
+  html += '<div style="text-align:center;padding:24px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🔧</div><div class="t-xs">Nenhuma manutenção registrada</div></div>';
+  html += '</div>';
+
+  // Tab Motorista
+  if (v.motoristaNome) {
+    html += '<div id="vt-motor" style="display:none">';
+    html += '<div class="t-xs t-m mb2">Motorista atual</div><div class="fw7 mb3">' + v.motoristaNome + '</div>';
+    html += '<div class="t-xs t-m mb2">Docs do motorista</div>';
+    html += '<div class="dropzone" id="dz-mdoc"><input type="file" accept="image/*,.pdf" multiple onchange="handleFile(event,\'dz-mdoc\')"><div class="dz-icon">🪪</div><p><strong>Clique ou arraste</strong><br>Docs do motorista</p></div>';
+    html += '</div>';
+  }
+
+  html += '<div class="f g3 mt4 fw">';
+  html += '<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>';
+  html += '<button class="btn btn-warn" onclick="editVeiculo(' + i + ')">✏️ Editar</button>';
+  if (v.status !== 'bloqueado') html += '<button class="btn btn-danger" onclick="closeModal();bloquearVeiculo(' + i + ')">🔒 Bloquear</button>';
+  html += '</div>';
+
+  openModal(html);
+}
+
+function showVTab(btn, tabId) {
+  var modal = btn.closest('.modal');
+  if (!modal) return;
+  modal.querySelectorAll('[id^="vt-"]').forEach(function(t) { t.style.display = 'none'; });
+  modal.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  var tab = document.getElementById(tabId);
+  if (tab) tab.style.display = 'block';
+  btn.classList.add('active');
+}
+
+function openModalAddVeiculo() {
+  var html = '<div class="modal-title">🚗 Cadastrar Veículo<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>';
+  html += '<div class="r3 mb3">';
+  html += '<div class="fg" style="margin:0"><label>Placa</label><input id="v-placa" placeholder="ABC-1234" maxlength="8"></div>';
+  html += '<div class="fg" style="margin:0"><label>Modelo</label><input id="v-modelo" placeholder="Civic, Corolla..."></div>';
+  html += '<div class="fg" style="margin:0"><label>Marca</label><input id="v-marca" placeholder="Honda, Toyota..."></div>';
+  html += '</div>';
+  html += '<div class="r3 mb3">';
+  html += '<div class="fg" style="margin:0"><label>Ano</label><input id="v-ano" type="number" placeholder="2022"></div>';
+  html += '<div class="fg" style="margin:0"><label>Cor</label><input id="v-cor" placeholder="Prata, Preto..."></div>';
+  html += '<div class="fg" style="margin:0"><label>Categoria</label><select id="v-cat"><option>Sedan</option><option>SUV</option><option>Hatch</option><option>Pickup</option></select></div>';
+  html += '</div>';
+  html += '<div class="r2 mb3">';
+  html += '<div class="fg" style="margin:0"><label>KM Atual</label><input id="v-km" type="number" placeholder="45000"></div>';
+  html += '<div class="fg" style="margin:0"><label>Próxima Revisão</label><input id="v-rev" type="date"></div>';
+  html += '</div>';
+  html += '<div class="r3 mb3">';
+  html += '<div class="fg" style="margin:0"><label>Seguro (R$/mês)</label><input id="v-seg" type="number" placeholder="320"></div>';
+  html += '<div class="fg" style="margin:0"><label>Rastreador (R$/mês)</label><input id="v-rastr" type="number" placeholder="89"></div>';
+  html += '<div class="fg" style="margin:0"><label>Status</label><select id="v-status"><option value="disponivel">Disponível</option><option value="alugado">Alugado</option><option value="vendido_aluguel">Venda em Aluguel</option><option value="revisao">Em Revisão</option><option value="bloqueado">Bloqueado</option><option value="inativo">Inativo</option></select></div>';
+  html += '</div>';
+  html += '<div class="fg"><label>Sócio responsável</label><select id="v-socio"><option value="">Selecione o sócio</option>';
+  STATE.socios.forEach(function(s) { html += '<option value="' + s.id + '">' + s.nome + '</option>'; });
+  html += '</select></div>';
+  html += '<div class="fg"><label>Fotos do veículo</label>';
+  html += '<div class="dropzone" id="dz-nv"><input type="file" accept="image/*" multiple onchange="handleFile(event,\'dz-nv\')"><div class="dz-icon">📸</div><p><strong>Clique ou arraste</strong><br>Adicione fotos do veículo</p></div>';
+  html += '</div>';
+  html += '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-accent" onclick="saveVeiculo()">💾 Salvar Veículo</button></div>';
+  openModal(html);
+}
+
+function saveVeiculo() {
+  var placa  = document.getElementById('v-placa');
+  var modelo = document.getElementById('v-modelo');
+  if (!placa || !placa.value.trim()) { showToast('Informe a placa', 'red'); return; }
+  if (!modelo || !modelo.value.trim()) { showToast('Informe o modelo', 'red'); return; }
+  var emojis = { 'Sedan':'🚗', 'SUV':'🚙', 'Hatch':'🚘', 'Pickup':'🛻' };
+  var cat    = document.getElementById('v-cat');
+  STATE.veiculos.push({
+    placa:         placa.value.trim().toUpperCase(),
+    modelo:        modelo.value.trim(),
+    marca:         (document.getElementById('v-marca') || {}).value || '',
+    ano:           parseInt((document.getElementById('v-ano') || {}).value) || '',
+    cor:           (document.getElementById('v-cor') || {}).value || '',
+    categoria:     cat ? cat.value : '',
+    km:            parseInt((document.getElementById('v-km') || {}).value) || 0,
+    proximaRevisao:(document.getElementById('v-rev') || {}).value || '',
+    seguro:        parseFloat((document.getElementById('v-seg') || {}).value) || 0,
+    rastreador:    parseFloat((document.getElementById('v-rastr') || {}).value) || 0,
+    status:        (document.getElementById('v-status') || { value:'disponivel' }).value,
+    socioId:       (document.getElementById('v-socio') || {}).value || '',
+    socioNome:     '',
+    motoristaNome: '',
+    atraso:        0,
+    emoji:         cat ? (emojis[cat.value] || '🚗') : '🚗'
+  });
+  closeModal();
+  showToast('Veículo cadastrado com sucesso!', 'green');
+  renderPage('veiculos');
+  updateBadges();
+}
+
+function editVeiculo(i) {
+  closeModal();
+  showToast('Em breve: edição de veículo', 'green');
+}
+
+function openModalAddManutencao(i) {
+  closeModal();
+  openModal(
+    '<div class="modal-title">🔧 Registrar Manutenção<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="fg"><label>Tipo de manutenção</label><select><option>Revisão preventiva</option><option>Troca de pneu (2)</option><option>Troca de pneu (4)</option><option>Balanceamento</option><option>Funilaria</option><option>Reparo de avaria</option><option>Outro</option></select></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Data</label><input type="date"></div><div class="fg" style="margin:0"><label>Valor (R$)</label><input type="number" placeholder="0,00"></div></div>' +
+    '<div class="fg"><label>Oficina / Fornecedor</label><input placeholder="Nome da oficina"></div>' +
+    '<div class="fg"><label>Descrição</label><textarea placeholder="Descreva o serviço realizado..."></textarea></div>' +
+    '<div class="fg"><label>Comprovante</label><div class="dropzone" id="dz-manut"><input type="file" accept="image/*,.pdf" onchange="handleFile(event,\'dz-manut\')"><div class="dz-icon">📎</div><p><strong>Clique ou arraste</strong></p></div></div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-success" onclick="closeModal();showToast(\'Manutenção registrada!\',\'green\')">💾 Salvar</button></div>'
+  );
+}
+
+// ─── CONTRATOS ───
+var CONTRATO_TIPOS = [
+  { id:'T1', label:'Aluguel — Valor Fixo Semanal',         desc:'Motorista paga valor fixo por semana' },
+  { id:'T2', label:'Aluguel — Divisão Percentual',         desc:'Receita dividida em percentual entre partes' },
+  { id:'T3', label:'Aluguel — Fixo + Custos Adicionais',   desc:'Valor fixo mais repasse de custos variáveis' },
+  { id:'T4', label:'Venda em Forma de Aluguel',            desc:'Motorista adquire o veículo pagando aluguel + parcela' }
+];
+
+function pageContratos() {
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>📄 Contratos</h1><p>' + STATE.contratos.length + ' contrato(s) cadastrado(s)</p></div>';
+  html += '<button class="btn btn-accent" onclick="openModalAddContrato()">➕ Novo Contrato</button></div></div>';
+
+  // Tipos de contrato
+  html += '<div class="card mb4"><div class="section-title">📋 Tipos de Contrato disponíveis</div>';
+  html += '<div class="r2">';
+  CONTRATO_TIPOS.forEach(function(t) {
+    html += '<div style="padding:12px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--border)">';
+    html += '<div class="fw7 t-xs">' + t.label + '</div>';
+    html += '<div class="t-xs t-m mt2">' + t.desc + '</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  if (STATE.contratos.length === 0) {
+    html += '<div class="card" style="text-align:center;padding:48px">';
+    html += '<div style="font-size:48px;margin-bottom:16px">📄</div>';
+    html += '<div class="fw7 mb2">Nenhum contrato cadastrado</div>';
+    html += '<p class="t-xs t-m mb4">Crie contratos vinculando veículos e motoristas</p>';
+    html += '<button class="btn btn-accent" onclick="openModalAddContrato()">➕ Criar primeiro contrato</button>';
+    html += '</div>';
+  } else {
+    html += '<div class="tw"><table><thead><tr><th>Contrato</th><th>Motorista</th><th>Veículo</th><th>Tipo</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+    STATE.contratos.forEach(function(c, i) {
+      html += '<tr>';
+      html += '<td class="mono fw7">#' + String(i + 1).padStart(3, '0') + '</td>';
+      html += '<td>' + (c.motoristaNome || '—') + '</td>';
+      html += '<td class="mono">' + (c.placa || '—') + '</td>';
+      html += '<td><span class="badge b-blue">' + (c.tipo || '—') + '</span></td>';
+      html += '<td class="txt-green fw7">' + fmtMoney(c.valor || 0) + '</td>';
+      html += '<td>' + (c.vencimento ? fmtDate(c.vencimento) : '—') + '</td>';
+      var stCls = c.status === 'ativo' ? 'b-green' : c.atraso > 0 ? 'b-red' : 'b-gray';
+      html += '<td><span class="badge ' + stCls + '">' + (c.status || 'Rascunho') + (c.atraso > 0 ? ' — ' + c.atraso + 'd atraso' : '') + '</span></td>';
+      html += '<td><div class="f g2"><button class="btn btn-ghost btn-sm" onclick="viewContrato(' + i + ')">👁</button><button class="btn btn-ghost btn-sm" onclick="downloadContratoSimulado(' + i + ')">📥 PDF</button></div></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  return html;
+}
+
+function openModalAddContrato() {
+  var veicOpts = STATE.veiculos.map(function(v) { return '<option value="' + v.placa + '">' + v.placa + ' — ' + v.modelo + '</option>'; }).join('');
+  var motOpts  = STATE.motoristas.filter(function(m){return m.status==='aprovado';}).map(function(m) { return '<option>' + m.nome + '</option>'; }).join('');
+  var tipoOpts = CONTRATO_TIPOS.map(function(t) { return '<option value="' + t.id + '">' + t.label + '</option>'; }).join('');
+  var socOpts  = STATE.socios.map(function(s) { return '<option>' + s.nome + '</option>'; }).join('');
+
+  openModal(
+    '<div class="modal-title">📄 Novo Contrato<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Veículo</label><select id="c-veiculo"><option value="">Selecione</option>' + veicOpts + '</select></div>' +
+    '<div class="fg" style="margin:0"><label>Motorista aprovado</label><select id="c-motorista"><option value="">Selecione</option>' + motOpts + '</select></div></div>' +
+    '<div class="fg"><label>Tipo de Contrato</label><select id="c-tipo">' + tipoOpts + '</select></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Valor (R$)</label><input id="c-valor" type="number" placeholder="0,00"></div>' +
+    '<div class="fg" style="margin:0"><label>Periodicidade</label><select id="c-periodo"><option>Semanal</option><option>Mensal</option></select></div></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Data de início</label><input id="c-inicio" type="date"></div>' +
+    '<div class="fg" style="margin:0"><label>Data de vencimento</label><input id="c-venc" type="date"></div></div>' +
+    '<div class="fg"><label>Sócio vinculado</label><select id="c-socio"><option value="">Nenhum</option>' + socOpts + '</select></div>' +
+    '<div class="fg"><label>Regras financeiras</label><textarea id="c-regras" placeholder="Descreva as regras de divisão, multas por atraso (12%/dia), condições especiais..."></textarea></div>' +
+    '<div class="fg"><label>Upload do contrato assinado</label><div class="dropzone" id="dz-contrato"><input type="file" accept="image/*,.pdf" onchange="handleFile(event,\'dz-contrato\')"><div class="dz-icon">📄</div><p><strong>Clique ou arraste</strong><br>PDF do contrato assinado</p></div></div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-accent" onclick="saveContrato()">💾 Salvar Contrato</button></div>'
+  );
+}
+
+function saveContrato() {
+  var veiculo = document.getElementById('c-veiculo');
+  var tipo    = document.getElementById('c-tipo');
+  var valor   = document.getElementById('c-valor');
+  if (!veiculo || !veiculo.value) { showToast('Selecione o veículo', 'red'); return; }
+  STATE.contratos.push({
+    placa:         veiculo.value,
+    motoristaNome: (document.getElementById('c-motorista') || {}).value || '',
+    tipo:          tipo ? tipo.options[tipo.selectedIndex].text : '',
+    tipoId:        tipo ? tipo.value : '',
+    valor:         parseFloat((valor || {}).value) || 0,
+    periodo:       (document.getElementById('c-periodo') || {}).value || '',
+    inicio:        (document.getElementById('c-inicio') || {}).value || '',
+    vencimento:    (document.getElementById('c-venc') || {}).value || '',
+    socio:         (document.getElementById('c-socio') || {}).value || '',
+    regras:        (document.getElementById('c-regras') || {}).value || '',
+    status:        'ativo',
+    atraso:        0
+  });
+  closeModal();
+  showToast('Contrato criado com sucesso!', 'green');
+  renderPage('contratos');
+  updateBadges();
+}
+
+function viewContrato(i) {
+  var c = STATE.contratos[i];
+  if (!c) return;
+  openModal(
+    '<div class="modal-title">📄 Contrato #' + String(i+1).padStart(3,'0') + '<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="card-accent card mb4" style="font-size:12px;line-height:1.9">' +
+    '<div class="fw8 t-xs" style="text-align:center;color:var(--accent);margin-bottom:12px">CONTRATO DE LOCAÇÃO DE VEÍCULO — ONDRIVE</div>' +
+    '<p><strong>VEÍCULO:</strong> ' + (c.placa || '—') + ' | <strong>MOTORISTA:</strong> ' + (c.motoristaNome || '—') + '</p>' +
+    '<p><strong>TIPO:</strong> ' + (c.tipo || '—') + ' | <strong>VALOR:</strong> ' + fmtMoney(c.valor) + '/' + (c.periodo || '') + '</p>' +
+    '<p><strong>INÍCIO:</strong> ' + (c.inicio ? fmtDate(c.inicio) : '—') + ' | <strong>VENCIMENTO:</strong> ' + (c.vencimento ? fmtDate(c.vencimento) : '—') + '</p>' +
+    '<div class="divider"></div>' +
+    '<p><strong>Cl. 1 — Valor:</strong> ' + fmtMoney(c.valor) + ' por período (' + (c.periodo || '') + ').</p>' +
+    '<p><strong>Cl. 2 — Atraso:</strong> Multa de 12% ao dia. Após 2 dias, bloqueio do veículo. Após 3 dias, contrato rescindido + busca e apreensão.</p>' +
+    '<p><strong>Cl. 3 — KM:</strong> Limite de 55.000 km/mês. Excedente cobrado conforme tabela.</p>' +
+    '<p><strong>Cl. 4 — Revisão:</strong> Acompanhamento semestral obrigatório pela Ondrive.</p>' +
+    (c.regras ? '<p><strong>Regras adicionais:</strong> ' + c.regras + '</p>' : '') +
+    '</div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Fechar</button>' +
+    '<button class="btn btn-accent" onclick="downloadContratoSimulado(' + i + ')">📥 Baixar PDF</button>' +
+    '<button class="btn btn-success" onclick="closeModal();showToast(\'Link de assinatura enviado!\',\'green\')">🔏 Assinar digitalmente</button></div>'
+  );
+}
+
+function downloadContratoSimulado(i) {
+  var c = STATE.contratos[i] || {};
+  var conteudo = 'CONTRATO DE LOCAÇÃO — ONDRIVE\n\n';
+  conteudo += 'Veículo: ' + (c.placa || '—') + '\n';
+  conteudo += 'Motorista: ' + (c.motoristaNome || '—') + '\n';
+  conteudo += 'Tipo: ' + (c.tipo || '—') + '\n';
+  conteudo += 'Valor: ' + fmtMoney(c.valor) + '/' + (c.periodo || '') + '\n';
+  conteudo += 'Início: ' + (c.inicio || '—') + '\n';
+  conteudo += 'Vencimento: ' + (c.vencimento || '—') + '\n\n';
+  conteudo += 'Cl. 1 - Atraso: 12% ao dia. Bloqueio após 2 dias. Rescisão após 3 dias.\n';
+  conteudo += 'Cl. 2 - KM: Limite 55.000 km/mês.\n';
+  conteudo += 'Cl. 3 - Revisão: Semestral obrigatória.\n\n';
+  conteudo += 'Suporte Ondrive\n(11) 99999-0000';
+  var blob = new Blob([conteudo], { type:'text/plain' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'contrato_' + (c.placa || 'ondrive') + '.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('Contrato baixado!', 'green');
+}
+
+// ─── FINANCEIRO ───
+function pageFinanceiro() {
+  var totalRec = STATE.financeiro.lancamentos.filter(function(l){return l.tipo==='receita';}).reduce(function(s,l){return s+(l.valor||0);},0);
+  var totalGas = STATE.financeiro.lancamentos.filter(function(l){return l.tipo==='despesa';}).reduce(function(s,l){return s+(l.valor||0);},0);
+  var lucro    = totalRec - totalGas;
+
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>💰 Financeiro</h1><p>Controle de receitas, gastos e repasses</p></div>';
+  html += '<button class="btn btn-accent" onclick="openModalLancamento()">➕ Lançamento</button></div></div>';
+
+  html += '<div class="stat-grid mb4">';
+  html += '<div class="stat s-green"><div class="stat-icon">💰</div><div class="stat-val">' + fmtMoney(totalRec) + '</div><div class="stat-label">Receita Total</div></div>';
+  html += '<div class="stat s-red"><div class="stat-icon">📉</div><div class="stat-val">' + fmtMoney(totalGas) + '</div><div class="stat-label">Gastos Totais</div></div>';
+  html += '<div class="stat s-blue"><div class="stat-icon">📈</div><div class="stat-val">' + fmtMoney(lucro) + '</div><div class="stat-label">Lucro Líquido</div></div>';
+  html += '</div>';
+
+  // Divisão
+  html += '<div class="card mb4"><div class="section-title">💼 Divisão — Repasse ao Sócio</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">';
+  html += '<div style="padding:14px;background:var(--bg2);border-radius:var(--rs);text-align:center"><div class="t-xs t-m">Bruto recebido</div><div class="fw7 txt-green" style="font-size:18px;margin-top:4px">' + fmtMoney(totalRec) + '</div></div>';
+  html += '<div style="padding:14px;background:var(--bg2);border-radius:var(--rs);text-align:center"><div class="t-xs t-m">Gastos</div><div class="fw7 txt-red" style="font-size:18px;margin-top:4px">-' + fmtMoney(totalGas) + '</div></div>';
+  html += '<div style="padding:14px;background:var(--bg2);border-radius:var(--rs);text-align:center"><div class="t-xs t-m">Lucro líquido</div><div class="fw7 txt-accent" style="font-size:18px;margin-top:4px">' + fmtMoney(lucro) + '</div></div>';
+  html += '<div style="padding:14px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);border-radius:var(--rs);text-align:center"><div class="t-xs t-m">Fica com ADM</div><div class="fw7 txt-accent" style="font-size:18px;margin-top:4px">' + fmtMoney(lucro * 0.5) + '</div></div>';
+  html += '<div style="padding:14px;background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);border-radius:var(--rs);text-align:center"><div class="t-xs t-m">Vai para sócio</div><div class="fw7 txt-green" style="font-size:18px;margin-top:4px">' + fmtMoney(lucro * 0.5) + '</div>';
+  html += '<button class="btn btn-success btn-sm mt2" onclick="gerarMsgRepasse()">💬 Gerar msg repasse</button></div>';
+  html += '</div></div>';
+
+  // Lançamentos
+  html += '<div class="ph-row mb3"><div class="section-title" style="margin:0">📋 Lançamentos</div></div>';
+  if (STATE.financeiro.lancamentos.length === 0) {
+    html += '<div class="card" style="text-align:center;padding:32px"><div style="font-size:32px;margin-bottom:10px">💳</div><div class="t-xs t-m">Nenhum lançamento ainda</div></div>';
+  } else {
+    html += '<div class="tw"><table><thead><tr><th>Data</th><th>Descrição</th><th>Veículo</th><th>Tipo contrato</th><th>Parcela</th><th>Tipo</th><th>Valor</th><th>Comprovante</th></tr></thead><tbody>';
+    STATE.financeiro.lancamentos.forEach(function(l, i) {
+      html += '<tr>';
+      html += '<td class="t-xs t-m">' + (l.data ? fmtDate(l.data) : '—') + '</td>';
+      html += '<td>' + (l.descricao || '—') + '</td>';
+      html += '<td class="mono">' + (l.veiculo || '—') + '</td>';
+      html += '<td><span class="badge b-blue">' + (l.tipoContrato || '—') + '</span></td>';
+      html += '<td><span class="badge b-gray">' + (l.parcela || '—') + '</span></td>';
+      html += '<td><span class="badge ' + (l.tipo === 'receita' ? 'b-green' : 'b-red') + '">' + (l.tipo || '—') + '</span></td>';
+      html += '<td class="fw7 ' + (l.tipo === 'receita' ? 'txt-green' : 'txt-red') + '">' + (l.tipo === 'receita' ? '+' : '-') + fmtMoney(l.valor) + '</td>';
+      html += '<td>' + (l.comprovante ? '<span class="badge b-green">✅</span>' : '<span class="badge b-gray">—</span>') + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  return html;
+}
+
+function openModalLancamento() {
+  var veicOpts = STATE.veiculos.map(function(v) { return '<option value="' + v.placa + '">' + v.placa + ' — ' + v.modelo + '</option>'; }).join('');
+  var tipoOpts = CONTRATO_TIPOS.map(function(t) { return '<option value="' + t.id + '">' + t.id + ' — ' + t.label + '</option>'; }).join('');
+  openModal(
+    '<div class="modal-title">💰 Novo Lançamento<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Tipo</label><select id="l-tipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>' +
+    '<div class="fg" style="margin:0"><label>Data</label><input id="l-data" type="date"></div></div>' +
+    '<div class="fg"><label>Descrição</label><input id="l-desc" placeholder="Ex: Aluguel semanal, Seguro, Manutenção..."></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Veículo</label><select id="l-veiculo"><option value="">Geral</option>' + veicOpts + '</select></div>' +
+    '<div class="fg" style="margin:0"><label>Valor (R$)</label><input id="l-valor" type="number" placeholder="0,00"></div></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Tipo de contrato</label><select id="l-tcontrato"><option value="">Geral</option>' + tipoOpts + '</select></div>' +
+    '<div class="fg" style="margin:0"><label>Parcela</label><select id="l-parcela"><option value="">—</option><option value="aluguel">Parcela Aluguel</option><option value="compra">Parcela Compra/Venda Aluguel</option></select></div></div>' +
+    '<div class="fg"><label>Comprovante</label><div class="dropzone" id="dz-lanc"><input type="file" accept="image/*,.pdf" onchange="handleFile(event,\'dz-lanc\')"><div class="dz-icon">📎</div><p><strong>Clique ou arraste</strong><br>Foto ou PDF</p></div></div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-accent" onclick="saveLancamento()">💾 Salvar</button></div>'
+  );
+}
+
+function saveLancamento() {
+  var valor = document.getElementById('l-valor');
+  var desc  = document.getElementById('l-desc');
+  if (!valor || !valor.value) { showToast('Informe o valor', 'red'); return; }
+  var tc = document.getElementById('l-tcontrato');
+  var lp = document.getElementById('l-parcela');
+  STATE.financeiro.lancamentos.push({
+    tipo:          (document.getElementById('l-tipo') || {}).value || 'receita',
+    data:          (document.getElementById('l-data') || {}).value || '',
+    descricao:     desc ? desc.value : '',
+    veiculo:       (document.getElementById('l-veiculo') || {}).value || '',
+    tipoContrato:  tc ? tc.value : '',
+    parcela:       lp ? lp.value : '',
+    valor:         parseFloat(valor.value) || 0,
+    comprovante:   false
+  });
+  closeModal();
+  showToast('Lançamento salvo!', 'green');
+  renderPage('financeiro');
+}
+
+
+var _lastMsg = '';
+function copiarMsgRepasse() {
+  copyText(_lastMsg);
+  showToast('Mensagem copiada! Cole no WhatsApp.', 'green');
+}
+
+function gerarMsgRepasse() {
+  var totalRec = STATE.financeiro.lancamentos.filter(function(l){return l.tipo==='receita';}).reduce(function(s,l){return s+(l.valor||0);},0);
+  var totalGas = STATE.financeiro.lancamentos.filter(function(l){return l.tipo==='despesa';}).reduce(function(s,l){return s+(l.valor||0);},0);
+  var lucro    = totalRec - totalGas;
+  var valSocio = lucro * 0.5;
+  _lastMsg = 'Olá! 🤝\n\nSegue o repasse referente ao período atual:\n\n💰 Receita bruta: ' + fmtMoney(totalRec) + '\n📉 Gastos: ' + fmtMoney(totalGas) + '\n📈 Lucro líquido: ' + fmtMoney(lucro) + '\n\n✅ Seu repasse: ' + fmtMoney(valSocio) + '\n\nData de pagamento: ' + new Date().toLocaleDateString('pt-BR') + '\n\nSuporte Ondrive\n(11) 99999-0000';
+  openModal(
+    '<div class="modal-title">💬 Mensagem de Repasse ao Sócio<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="wa-preview mb3"><div class="wa-bubble">' + msg.replace(/\n/g,'<br>') + '<div class="wa-time">agora ✓✓</div></div></div>' +
+    '<div class="alert-item a-blue mb3"><span class="alert-icon">📱</span><div class="alert-content"><div class="alert-desc">Copie a mensagem e envie via WhatsApp para o sócio.</div></div><span class="wa-phone">(11) 99999-0000</span></div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Fechar</button><button class="btn btn-accent" onclick="copiarMsgRepasse()">📋 Copiar mensagem</button></div>'
+  );
+}
+
+// ─── ALERTAS ───
+function pageAlertas() {
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div><h1>🔔 Alertas</h1><p>Central de alertas do sistema</p></div></div>';
+
+  var grupos = [
+    {
+      titulo: '🚨 Urgente — Ação imediata',
+      cor: 'a-red',
+      items: [
+        { icon:'🔒', title:'Veículo com 2+ dias de atraso', desc:'Configure veículos para receber alertas automáticos. Bloqueio recomendado.', btn:'Ver Veículos', page:'veiculos' },
+        { icon:'🚔', title:'Busca e apreensão iminente', desc:'Contratos com 3+ dias de atraso devem ser rescindidos.', btn:'Ver Contratos', page:'contratos' }
+      ]
+    },
+    {
+      titulo: '⚠️ Atenção — Requer acompanhamento',
+      cor: 'a-yellow',
+      items: [
+        { icon:'💳', title:'Pagamentos próximos do vencimento', desc:'Motoristas com vencimento em até 5 dias.', btn:'Ver Financeiro', page:'financeiro' },
+        { icon:'🔧', title:'Revisão a agendar', desc:'Veículos com revisão programada próxima.', btn:'Ver Veículos', page:'veiculos' },
+        { icon:'📍', title:'KM não informado', desc:'Motoristas pendentes de informar quilometragem do mês.', btn:'Ver Veículos', page:'veiculos' }
+      ]
+    },
+    {
+      titulo: '📋 Informação — Monitoramento',
+      cor: 'a-blue',
+      items: [
+        { icon:'👤', title:'Cadastros aguardando aprovação', desc:STATE.motoristas.filter(function(m){return m.status==='pendente';}).length + ' motorista(s) aguardando análise.', btn:'Aprovar', page:'motoristas' },
+        { icon:'📄', title:'Contratos próximos do vencimento', desc:'Contratos vencendo em 30 dias.', btn:'Ver Contratos', page:'contratos' },
+        { icon:'🛡️', title:'Seguro próximo de vencer', desc:'Verifique as apólices de seguro.', btn:'Ver Veículos', page:'veiculos' }
+      ]
+    }
+  ];
+
+  grupos.forEach(function(g) {
+    html += '<div class="section-title mt4 mb2">' + g.titulo + '</div>';
+    g.items.forEach(function(a) {
+      html += '<div class="alert-item ' + g.cor + '">';
+      html += '<span class="alert-icon">' + a.icon + '</span>';
+      html += '<div class="alert-content"><div class="alert-title">' + a.title + '</div><div class="alert-desc">' + a.desc + '</div></div>';
+      html += '<button class="btn btn-ghost btn-sm" onclick="navTo(\'' + a.page + '\',null)">' + a.btn + '</button>';
+      html += '</div>';
+    });
+  });
+
+  // Config alertas
+  html += '<div class="card mt4"><div class="section-title">⚙️ Configurar alertas automáticos</div>';
+  html += '<div class="t-xs t-m mb3">Defina antecedência para cada tipo de alerta:</div>';
+  ['Vencimento de pagamento','Revisão do veículo','Seguro próximo de vencer','KM do mês','Contrato vencendo'].forEach(function(item) {
+    html += '<div class="f ic jb mb2"><span class="t-sm">' + item + '</span>';
+    html += '<select style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:4px 8px;color:var(--text);font-size:11px">';
+    html += '<option>3 dias antes</option><option>5 dias antes</option><option>7 dias antes</option><option>15 dias antes</option>';
+    html += '</select></div>';
+  });
+  html += '<button class="btn btn-accent btn-sm mt2" onclick="showToast(\'Configurações salvas!\',\'green\')">💾 Salvar configurações</button>';
+  html += '</div>';
+  return html;
+}
+
+// ─── SÓCIOS ───
+function pageSocios() {
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>🤝 Sócios</h1><p>' + STATE.socios.length + ' sócio(s) cadastrado(s)</p></div>';
+  html += '<button class="btn btn-accent" onclick="openModalAddSocio()">➕ Cadastrar Sócio</button></div></div>';
+
+  if (STATE.socios.length === 0) {
+    html += '<div class="card" style="text-align:center;padding:48px">';
+    html += '<div style="font-size:48px;margin-bottom:16px">🤝</div>';
+    html += '<div class="fw7 mb2">Nenhum sócio cadastrado</div>';
+    html += '<p class="t-xs t-m mb4">Cadastre sócios para vincular veículos e calcular repasses</p>';
+    html += '<button class="btn btn-accent" onclick="openModalAddSocio()">➕ Cadastrar primeiro sócio</button>';
+    html += '</div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">';
+    STATE.socios.forEach(function(s, i) {
+      var veicS = STATE.veiculos.filter(function(v){return v.socioId === s.id;});
+      html += '<div class="card">';
+      html += '<div class="f ic g3 mb3">';
+      html += '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0066ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000">' + (s.nome ? s.nome[0].toUpperCase() : 'S') + '</div>';
+      html += '<div><div class="fw7">' + s.nome + '</div><div class="t-xs t-m">' + (s.cpf || s.cnpj || '—') + '</div></div>';
+      html += '</div>';
+      html += '<div class="r2 mb3">';
+      html += '<div style="text-align:center;padding:10px;background:var(--bg2);border-radius:var(--rs)"><div class="t-xs t-m">Veículos</div><div class="fw7 txt-accent">' + veicS.length + '</div></div>';
+      html += '<div style="text-align:center;padding:10px;background:var(--bg2);border-radius:var(--rs)"><div class="t-xs t-m">Divisão</div><div class="fw7 txt-green">' + (s.percentual || 50) + '%</div></div>';
+      html += '</div>';
+      html += '<div class="f g2"><button class="btn btn-ghost btn-sm" onclick="showToast(\'Dashboard do sócio em breve\')">📊 Dashboard</button><button class="btn btn-success btn-sm" onclick="gerarMsgRepasse()">💬 Repasse</button></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function openModalAddSocio() {
+  openModal(
+    '<div class="modal-title">🤝 Cadastrar Sócio<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Nome completo</label><input id="s-nome" placeholder="Nome do sócio"></div>' +
+    '<div class="fg" style="margin:0"><label>E-mail</label><input id="s-email" type="email" placeholder="email@exemplo.com"></div></div>' +
+    '<div class="r3 mb3"><div class="fg" style="margin:0"><label>CPF ou CNPJ</label><input id="s-cpf" placeholder="000.000.000-00"></div>' +
+    '<div class="fg" style="margin:0"><label>Telefone</label><input id="s-tel" placeholder="(11) 99999-0000"></div>' +
+    '<div class="fg" style="margin:0"><label>% de participação</label><input id="s-perc" type="number" placeholder="50" min="0" max="100"></div></div>' +
+    '<div class="fg"><label>Dados bancários para repasse</label><input id="s-banco" placeholder="Banco, agência, conta ou Pix"></div>' +
+    '<div class="fg"><label>Documentos (RG/CPF/Contrato social)</label><div class="dropzone" id="dz-socio"><input type="file" accept="image/*,.pdf" multiple onchange="handleFile(event,\'dz-socio\')"><div class="dz-icon">📎</div><p><strong>Clique ou arraste</strong></p></div></div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-accent" onclick="saveSocio()">💾 Salvar</button></div>'
+  );
+}
+
+function saveSocio() {
+  var nome = document.getElementById('s-nome');
+  if (!nome || !nome.value.trim()) { showToast('Informe o nome', 'red'); return; }
+  var id = 'S' + Date.now();
+  STATE.socios.push({
+    id:         id,
+    nome:       nome.value.trim(),
+    email:      (document.getElementById('s-email') || {}).value || '',
+    cpf:        (document.getElementById('s-cpf') || {}).value || '',
+    cnpj:       '',
+    tel:        (document.getElementById('s-tel') || {}).value || '',
+    percentual: parseInt((document.getElementById('s-perc') || {}).value) || 50,
+    banco:      (document.getElementById('s-banco') || {}).value || ''
+  });
+  closeModal();
+  showToast('Sócio cadastrado!', 'green');
+  renderPage('socios');
+}
+
+// ─── APROVAÇÃO MOTORISTAS ───
+function pageMotoristas() {
+  var pendentes  = STATE.motoristas.filter(function(m){return m.status==='pendente';});
+  var aprovados  = STATE.motoristas.filter(function(m){return m.status==='aprovado';});
+  var reprovados = STATE.motoristas.filter(function(m){return m.status==='reprovado';});
+
+  var html = '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>';
+  html += '<div class="ph"><div class="ph-row"><div><h1>👤 Aprovação de Motoristas</h1><p>Análise de cadastros e score</p></div>';
+  html += '<button class="btn btn-accent" onclick="openModalAddMotorista()">➕ Inserir Motorista</button></div></div>';
+
+  html += '<div class="tabs mb4" id="motor-tabs">';
+  html += '<button class="tab-btn active" onclick="showMotorTab(this,\'mt-pend\')">⏳ Aguardando (' + pendentes.length + ')</button>';
+  html += '<button class="tab-btn" onclick="showMotorTab(this,\'mt-apr\')">✅ Aprovados (' + aprovados.length + ')</button>';
+  html += '<button class="tab-btn" onclick="showMotorTab(this,\'mt-rep\')">❌ Reprovados (' + reprovados.length + ')</button>';
+  html += '</div>';
+
+  function renderMotoristaList(list) {
+    if (list.length === 0) return '<div class="card" style="text-align:center;padding:32px;color:var(--text2)">Nenhum motorista nesta categoria</div>';
+    return list.map(function(m, i) {
+      var idx = STATE.motoristas.indexOf(m);
+      var score = calcScore(m);
+      var sr = score >= 80 ? 'A' : score >= 60 ? 'B' : score >= 40 ? 'C' : 'D';
+      return '<div class="card mb3">' +
+        '<div class="f ic jb fw g3 mb3">' +
+          '<div class="f ic g3">' +
+            '<div class="score-ring sr-' + sr + '">' + sr + '</div>' +
+            '<div><div class="fw7">' + (m.nome || 'Motorista') + '</div><div class="t-xs t-m">' + (m.cpf || '—') + ' · ' + (m.tel || '—') + '</div><div class="t-xs t-m">' + (m.endereco || '—') + '</div></div>' +
+          '</div>' +
+          '<div style="text-align:right"><div class="t-xs t-m">Score de aprovação</div><div class="fw8 txt-accent" style="font-size:22px">' + score + '/100</div>' +
+          '<div class="t-xs">Pontuação CNH: ' + (m.pontosCNH !== undefined ? m.pontosCNH : '—') + ' pts</div></div>' +
+        '</div>' +
+        '<div class="f g2 fw mb3">' +
+          (m.temCNH ? '<span class="badge b-green">🪪 CNH ok</span>' : '<span class="badge b-red">🪪 CNH pendente</span>') +
+          (m.temComprovante ? '<span class="badge b-green">🏠 Comprovante ok</span>' : '<span class="badge b-yellow">🏠 Comprovante pendente</span>') +
+          (m.temApp ? '<span class="badge b-green">📱 App ok</span>' : '<span class="badge b-gray">📱 Sem print app</span>') +
+          (m.ref1 ? '<span class="badge b-green">👥 Ref. 1</span>' : '<span class="badge b-yellow">👥 Ref. 1 pendente</span>') +
+          (m.ref2 ? '<span class="badge b-green">👥 Ref. 2</span>' : '<span class="badge b-yellow">👥 Ref. 2 pendente</span>') +
+        '</div>' +
+        '<div class="section-title t-xs mb2">Referências</div>' +
+        '<div class="r2 mb3">' +
+          '<div class="t-xs"><span class="t-m">Nome:</span> ' + (m.ref1Nome || '—') + '<br><span class="t-m">Tel:</span> ' + (m.ref1Tel || '—') + '<br><span class="t-m">End.:</span> ' + (m.ref1End || '—') + '</div>' +
+          '<div class="t-xs"><span class="t-m">Nome:</span> ' + (m.ref2Nome || '—') + '<br><span class="t-m">Tel:</span> ' + (m.ref2Tel || '—') + '<br><span class="t-m">End.:</span> ' + (m.ref2End || '—') + '</div>' +
+        '</div>' +
+        (m.status === 'pendente' ?
+          '<div class="f g2 fw">' +
+          '<button class="btn btn-ghost btn-sm" onclick="openMotoristaDetail(' + idx + ')">📋 Ver completo</button>' +
+          '<button class="btn btn-success btn-sm" onclick="aprovarMotorista(' + idx + ')">✅ Aprovar</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="reprovarMotorista(' + idx + ')">❌ Reprovar</button>' +
+          '</div>'
+          : '<button class="btn btn-ghost btn-sm" onclick="openMotoristaDetail(' + idx + ')">📋 Ver dados</button>'
+        ) +
+        '</div>';
+    }).join('');
+  }
+
+  html += '<div id="mt-pend">' + renderMotoristaList(pendentes) + '</div>';
+  html += '<div id="mt-apr" style="display:none">' + renderMotoristaList(aprovados) + '</div>';
+  html += '<div id="mt-rep" style="display:none">' + renderMotoristaList(reprovados) + '</div>';
+  return html;
+}
+
+function showMotorTab(btn, tabId) {
+  document.querySelectorAll('#motor-tabs .tab-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  ['mt-pend','mt-apr','mt-rep'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = id === tabId ? 'block' : 'none';
+  });
+}
+
+function calcScore(m) {
+  var score = 0;
+  score += m.temCNH ? 20 : 0;
+  score += m.temComprovante ? 15 : 0;
+  score += m.temApp ? 20 : 0;
+  score += m.ref1 ? 10 : 0;
+  score += m.ref2 ? 10 : 0;
+  var pontos = m.pontosCNH !== undefined ? parseInt(m.pontosCNH) : 0;
+  score += pontos === 0 ? 25 : pontos <= 10 ? 15 : pontos <= 20 ? 5 : 0;
+  return Math.min(score, 100);
+}
+
+function aprovarMotorista(i) {
+  STATE.motoristas[i].status = 'aprovado';
+  showToast('Motorista aprovado!', 'green');
+  renderPage('motoristas');
+  updateBadges();
+}
+
+function reprovarMotorista(i) {
+  STATE.motoristas[i].status = 'reprovado';
+  showToast('Motorista reprovado.', 'red');
+  renderPage('motoristas');
+  updateBadges();
+}
+
+function openMotoristaDetail(i) {
+  var m = STATE.motoristas[i];
+  if (!m) return;
+  var score = calcScore(m);
+  openModal(
+    '<div class="modal-title">👤 ' + (m.nome || 'Motorista') + '<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="f ic g3 mb3">' +
+      '<div class="score-ring sr-' + (score>=80?'A':score>=60?'B':score>=40?'C':'D') + '">' + (score>=80?'A':score>=60?'B':score>=40?'C':'D') + '</div>' +
+      '<div><div class="t-xs t-m">Score de aprovação</div><div class="fw8 txt-accent" style="font-size:28px">' + score + '/100</div></div>' +
+    '</div>' +
+    '<div class="r2 mb3"><div class="t-xs t-m">CPF</div><div class="mono t-sm">' + (m.cpf || '—') + '</div>' +
+    '<div class="t-xs t-m">Telefone</div><div class="t-sm">' + (m.tel || '—') + '</div></div>' +
+    '<div class="fg" style="margin-bottom:8px"><label>Endereço</label><div class="t-sm">' + (m.endereco || '—') + '</div></div>' +
+    '<div class="section-title mb2">Documentos</div>' +
+    '<div class="f g2 fw mb3">' +
+      (m.temCNH?'<span class="badge b-green">🪪 CNH enviada</span>':'<span class="badge b-red">🪪 CNH pendente</span>') +
+      '<div class="t-xs t-m">Pontos CNH: ' + (m.pontosCNH || '0') + '</div>' +
+      (m.temComprovante?'<span class="badge b-green">🏠 Comprovante</span>':'<span class="badge b-yellow">🏠 Comprovante pend.</span>') +
+      (m.temApp?'<span class="badge b-green">📱 Print app</span>':'<span class="badge b-gray">📱 Sem print</span>') +
+    '</div>' +
+    '<div class="section-title mb2">Referências</div>' +
+    '<div class="r2 mb3">' +
+      '<div style="padding:10px;background:var(--bg2);border-radius:var(--rs)"><div class="fw7 t-xs mb1">Referência 1</div><div class="t-xs">' + (m.ref1Nome||'—') + '</div><div class="t-xs t-m">' + (m.ref1Tel||'—') + '</div><div class="t-xs t-m">' + (m.ref1End||'—') + '</div></div>' +
+      '<div style="padding:10px;background:var(--bg2);border-radius:var(--rs)"><div class="fw7 t-xs mb1">Referência 2</div><div class="t-xs">' + (m.ref2Nome||'—') + '</div><div class="t-xs t-m">' + (m.ref2Tel||'—') + '</div><div class="t-xs t-m">' + (m.ref2End||'—') + '</div></div>' +
+    '</div>' +
+    '<div class="f g3 fw">' +
+      '<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>' +
+      (m.status==='pendente' ?
+        '<button class="btn btn-success" onclick="closeModal();aprovarMotorista('+i+')">✅ Aprovar</button>' +
+        '<button class="btn btn-danger" onclick="closeModal();reprovarMotorista('+i+')">❌ Reprovar</button>' : '') +
+    '</div>'
+  );
+}
+
+function openModalAddMotorista() {
+  openModal(
+    '<div class="modal-title">👤 Inserir Motorista<button class="btn btn-icon btn-sm" onclick="closeModal()">✕</button></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Nome completo</label><input id="m-nome" placeholder="Nome do motorista"></div>' +
+    '<div class="fg" style="margin:0"><label>CPF</label><input id="m-cpf" placeholder="000.000.000-00" maxlength="14"></div></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Telefone</label><input id="m-tel" placeholder="(11) 99999-0000"></div>' +
+    '<div class="fg" style="margin:0"><label>Pontos na CNH</label><input id="m-pontos" type="number" placeholder="0" min="0" max="40"></div></div>' +
+    '<div class="fg"><label>Endereço completo</label><input id="m-end" placeholder="Rua, número, bairro, cidade, estado, CEP"></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Nome — Referência 1</label><input id="m-r1n" placeholder="Nome completo"></div>' +
+    '<div class="fg" style="margin:0"><label>Tel — Referência 1</label><input id="m-r1t" placeholder="(11) 99999-0000"></div></div>' +
+    '<div class="fg"><label>Endereço — Referência 1</label><input id="m-r1e" placeholder="Endereço completo"></div>' +
+    '<div class="r2 mb3"><div class="fg" style="margin:0"><label>Nome — Referência 2</label><input id="m-r2n" placeholder="Nome completo"></div>' +
+    '<div class="fg" style="margin:0"><label>Tel — Referência 2</label><input id="m-r2t" placeholder="(11) 99999-0000"></div></div>' +
+    '<div class="fg"><label>Endereço — Referência 2</label><input id="m-r2e" placeholder="Endereço completo"></div>' +
+    '<div class="section-title mb2">Documentos</div>' +
+    '<div class="r3 mb3">' +
+      '<div><label style="font-size:10px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px;text-transform:uppercase">CNH</label><div class="dropzone" id="dz-mcnh"><input type="file" accept="image/*,.pdf" onchange="handleFile(event,\'dz-mcnh\')"><div class="dz-icon">🪪</div><p><strong>Clique</strong></p></div></div>' +
+      '<div><label style="font-size:10px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px;text-transform:uppercase">Comprovante</label><div class="dropzone" id="dz-mcomp"><input type="file" accept="image/*,.pdf" onchange="handleFile(event,\'dz-mcomp\')"><div class="dz-icon">🏠</div><p><strong>Clique</strong></p></div></div>' +
+      '<div><label style="font-size:10px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px;text-transform:uppercase">Print App</label><div class="dropzone" id="dz-mapp"><input type="file" accept="image/*" multiple onchange="handleFile(event,\'dz-mapp\')"><div class="dz-icon">📱</div><p><strong>Clique</strong></p></div></div>' +
+    '</div>' +
+    '<div class="f g3 fw"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-accent" onclick="saveMotorista()">💾 Salvar</button></div>'
+  );
+}
+
+function saveMotorista() {
+  var nome = document.getElementById('m-nome');
+  if (!nome || !nome.nome) {}
+  var dzCNH  = document.getElementById('dz-mcnh');
+  var dzComp = document.getElementById('dz-mcomp');
+  var dzApp  = document.getElementById('dz-mapp');
+  STATE.motoristas.push({
+    nome:      (document.getElementById('m-nome') || {}).value || '',
+    cpf:       (document.getElementById('m-cpf') || {}).value || '',
+    tel:       (document.getElementById('m-tel') || {}).value || '',
+    pontosCNH: parseInt((document.getElementById('m-pontos') || {}).value) || 0,
+    endereco:  (document.getElementById('m-end') || {}).value || '',
+    ref1Nome:  (document.getElementById('m-r1n') || {}).value || '',
+    ref1Tel:   (document.getElementById('m-r1t') || {}).value || '',
+    ref1End:   (document.getElementById('m-r1e') || {}).value || '',
+    ref2Nome:  (document.getElementById('m-r2n') || {}).value || '',
+    ref2Tel:   (document.getElementById('m-r2t') || {}).value || '',
+    ref2End:   (document.getElementById('m-r2e') || {}).value || '',
+    temCNH:    dzCNH && dzCNH.querySelectorAll('.file-item').length > 0,
+    temComprovante: dzComp && dzComp.querySelectorAll('.file-item').length > 0,
+    temApp:    dzApp && dzApp.querySelectorAll('.file-item').length > 0,
+    ref1:      !!((document.getElementById('m-r1n') || {}).value),
+    ref2:      !!((document.getElementById('m-r2n') || {}).value),
+    status:    'pendente'
+  });
+  closeModal();
+  showToast('Motorista inserido para análise!', 'green');
+  renderPage('motoristas');
+  updateBadges();
+}
+
+// ─── IA PAGE ───
+function pageIA() {
+  return '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>' +
+    '<div class="ph"><div><h1>🤖 Chatbot Ondrive</h1><p>Assistente inteligente de gestão da frota</p></div></div>' +
+    '<div class="card" style="height:calc(100vh - 200px);display:flex;flex-direction:column;padding:0;overflow:hidden">' +
+      '<div class="ia-msgs" id="ia-page-msgs" style="flex:1">' +
+        '<div class="ia-msg-bot">Olá! Sou o Chatbot Ondrive. Posso ajudar com análise da frota, alertas, financeiro, contratos e mais. Como posso ajudar?</div>' +
+      '</div>' +
+      '<div style="padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">' +
+        ['Quais veículos estão em atraso?','Quanto entrou este mês?','Análise de risco dos motoristas','Projeção de receita 30 dias','Motoristas aguardando aprovação','Gerar mensagem de cobrança'].map(function(s) {
+          return '<button style="background:var(--bg3);border:1px solid var(--border);border-radius:99px;padding:4px 10px;font-size:10px;color:var(--text2);cursor:pointer;font-family:Sora,sans-serif" onclick="sendIAPage(\'' + s + '\')">' + s + '</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="ia-inp-row">' +
+        '<input class="ia-inp" id="ia-page-input" placeholder="Pergunte qualquer coisa sobre a frota..." onkeydown="if(event.key===\'Enter\')sendIAPage()">' +
+        '<button class="btn btn-accent" onclick="sendIAPage()">→</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function sendIAPage(msg) {
+  var inp = document.getElementById('ia-page-input');
+  var m   = msg || (inp ? inp.value.trim() : '');
+  if (!m) return;
+  if (inp) inp.value = '';
+  var box = document.getElementById('ia-page-msgs');
+  if (!box) return;
+  var ud = document.createElement('div'); ud.className='ia-msg-user'; ud.textContent = m; box.appendChild(ud);
+  setTimeout(function() {
+    var bd = document.createElement('div'); bd.className='ia-msg-bot'; bd.innerHTML = iaRespond(m).replace(/\n/g,'<br>');
+    box.appendChild(bd); box.scrollTop = box.scrollHeight;
+  }, 600);
+}
+
+// ─── CONFIGURAÇÕES ───
+function pageConfig() {
+  return '<button class="btn-back" onclick="renderPage(\'inicio\')">← Início</button>' +
+    '<div class="ph"><div><h1>⚙️ Configurações</h1><p>Parâmetros do sistema Ondrive</p></div></div>' +
+    '<div class="g2c">' +
+      '<div class="card"><div class="section-title">🏢 Dados da empresa</div>' +
+        '<div class="fg"><label>Nome da empresa</label><input placeholder="Ondrive Gestão de Frota"></div>' +
+        '<div class="fg"><label>CNPJ</label><input placeholder="00.000.000/0001-00"></div>' +
+        '<div class="fg"><label>Telefone suporte</label><input placeholder="(11) 99999-0000" id="cfg-tel"></div>' +
+        '<div class="fg"><label>E-mail suporte</label><input type="email" placeholder="suporte@ondrive.com.br"></div>' +
+        '<div class="fg"><label>Chave Pix</label><input placeholder="chave@ondrive.com.br"></div>' +
+        '<button class="btn btn-accent btn-sm" onclick="showToast(\'Dados salvos!\',\'green\')">💾 Salvar</button>' +
+      '</div>' +
+      '<div class="card"><div class="section-title">📋 Regras do sistema</div>' +
+        '<div class="fg"><label>Juros por dia de atraso (%)</label><input type="number" value="12" placeholder="12"></div>' +
+        '<div class="fg"><label>Dias para bloqueio</label><input type="number" value="2" placeholder="2"></div>' +
+        '<div class="fg"><label>Dias para rescisão</label><input type="number" value="3" placeholder="3"></div>' +
+        '<div class="fg"><label>Limite KM mensal</label><input type="number" value="55000" placeholder="55000"></div>' +
+        '<div class="fg"><label>KM para revisão completa</label><input type="number" value="100000" placeholder="100000"></div>' +
+        '<button class="btn btn-accent btn-sm" onclick="showToast(\'Regras salvas!\',\'green\')">💾 Salvar</button>' +
+      '</div>' +
+      '<div class="card"><div class="section-title">🔑 Acesso de usuários</div>' +
+        '<div class="fg"><label>E-mail ADM</label><input type="email" placeholder="adm@ondrive.com.br"></div>' +
+        '<div class="fg"><label>Senha ADM</label><input type="password" placeholder="••••••••"></div>' +
+        '<div class="divider"></div>' +
+        '<div class="t-xs t-m mb2">Cada usuário recebe login individual após cadastro aprovado.</div>' +
+        '<button class="btn btn-success btn-sm" onclick="showToast(\'Usuário criado!\',\'green\')">➕ Criar usuário</button>' +
+      '</div>' +
+      '<div class="card"><div class="section-title">💬 Mensagens padrão</div>' +
+        '<div class="fg"><label>Msg de boas-vindas</label><textarea style="min-height:60px" placeholder="Bem-vindo ao Ondrive!..."></textarea></div>' +
+        '<div class="fg"><label>Msg de cobrança (1 dia)</label><textarea style="min-height:60px" placeholder="Olá! Identificamos..."></textarea></div>' +
+        '<div class="fg"><label>Msg de bloqueio (2 dias)</label><textarea style="min-height:60px" placeholder="Seu veículo foi bloqueado..."></textarea></div>' +
+        '<button class="btn btn-accent btn-sm" onclick="showToast(\'Mensagens salvas!\',\'green\')">💾 Salvar</button>' +
+      '</div>' +
+    '</div>';
+}
+
+// ═══════════════════════════════════════════
+// MOTORISTA SCREENS
+// ═══════════════════════════════════════════
+function renderDrv(page) {
+  var pages = {
+    'drv-inicio':    drvInicio,
+    'drv-veiculo':   drvVeiculo,
+    'drv-pagamento': drvPagamento,
+    'drv-vistoria':  drvVistoria,
+    'drv-contrato':  drvContrato,
+    'drv-docs':      drvDocs,
+    'drv-km':        drvKm,
+    'drv-multas':    drvMultas
+  };
+  var fn = pages[page] || drvInicio;
+  setHTML('drv-content', fn());
+}
+
+function drvInicio() {
+  return '<div class="ph"><div><h1>🏠 Meu Painel</h1><p>Bem-vindo ao Ondrive</p></div></div>' +
+    '<div class="alert-item a-yellow mb3"><span class="alert-icon">⏰</span><div class="alert-content"><div class="alert-title">Pagamento próximo</div><div class="alert-desc">Informe o KM do mês e mantenha seus dados atualizados</div></div></div>' +
+    '<div class="stat-grid mb4">' +
+      '<div class="stat s-blue"><div class="stat-icon">🚗</div><div class="stat-val">—</div><div class="stat-label">Meu veículo</div></div>' +
+      '<div class="stat s-green"><div class="stat-icon">🛣️</div><div class="stat-val">—</div><div class="stat-label">KM atual</div></div>' +
+      '<div class="stat s-yellow"><div class="stat-icon">💳</div><div class="stat-val">—</div><div class="stat-label">Próx. pagamento</div></div>' +
+      '<div class="stat s-red"><div class="stat-icon">🚨</div><div class="stat-val">0</div><div class="stat-label">Multas</div></div>' +
+    '</div>' +
+    '<div class="card mb3"><div class="section-title">🚀 Ações rápidas</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+        '<button class="btn btn-accent btn-full" onclick="navDrv(\'drv-km\',null)">🛣️ Informar KM do mês</button>' +
+        '<button class="btn btn-ghost btn-full" onclick="navDrv(\'drv-vistoria\',null)">📅 Agendar vistoria</button>' +
+        '<button class="btn btn-ghost btn-full" onclick="navDrv(\'drv-pagamento\',null)">💳 Ver pagamento</button>' +
+        '<button class="btn btn-success btn-full" onclick="copyText(\'(11) 99999-0000\');showToast(\'Número copiado: (11) 99999-0000 — abra o WhatsApp!\')">💬 Falar com suporte</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function drvVeiculo() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>🚗 Meu Veículo</h1></div></div>' +
+    '<div class="card" style="text-align:center;padding:40px">' +
+      '<div style="font-size:64px;margin-bottom:16px">🚗</div>' +
+      '<div class="fw7" style="font-size:18px;margin-bottom:4px">Veículo não vinculado</div>' +
+      '<p class="t-xs t-m mb4">Após a aprovação do seu cadastro, o veículo será vinculado aqui.</p>' +
+      '<div style="text-align:left;max-width:320px;margin:0 auto">' +
+        '<div class="f ic jb mb2"><span class="t-xs t-m">Placa</span><span class="fw7">—</span></div>' +
+        '<div class="f ic jb mb2"><span class="t-xs t-m">Modelo</span><span class="fw7">—</span></div>' +
+        '<div class="f ic jb mb2"><span class="t-xs t-m">Ano</span><span class="fw7">—</span></div>' +
+        '<div class="f ic jb mb2"><span class="t-xs t-m">KM atual</span><span class="fw7">—</span></div>' +
+        '<div class="f ic jb mb2"><span class="t-xs t-m">Próxima revisão</span><span class="fw7">—</span></div>' +
+        '<div class="f ic jb mb2"><span class="t-xs t-m">Seguro</span><span class="fw7">—</span></div>' +
+        '<div class="f ic jb"><span class="t-xs t-m">Rastreador</span><span class="fw7">—</span></div>' +
+      '</div>' +
+    '</div>';
+}
+
+function drvPagamento() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>💳 Pagamento</h1></div></div>' +
+    '<div class="alert-item a-blue mb4"><span class="alert-icon">ℹ️</span><div class="alert-content"><div class="alert-desc">Multa de 12% ao dia após vencimento. Bloqueio após 2 dias. Busca e apreensão após 3 dias.</div></div></div>' +
+    '<div class="pix-box mb4">' +
+      '<div class="t-xs t-m mb2">Pague via Pix</div>' +
+      '<div style="font-size:32px;margin-bottom:8px">📱</div>' +
+      '<div class="pix-key">ondrive@pix.com.br</div>' +
+      '<div class="t-xs t-m mb3">Chave E-mail · Após pagamento, envie o comprovante para o suporte</div>' +
+      '<button class="btn btn-accent btn-full mb2" onclick="copyText(\'ondrive@pix.com.br\');showToast(\'Chave copiada!\',\'green\')">📋 Copiar chave Pix</button>' +
+      '<button class="btn btn-success btn-full" onclick="copyText(\'Olá! Realizei o pagamento e estou enviando o comprovante. Contrato: [seu contrato]\');showToast(\'Mensagem copiada! Envie pelo WhatsApp.\',\'green\')">💬 Enviar comprovante pelo WhatsApp</button>' +
+    '</div>' +
+    '<div class="card"><div class="section-title">Histórico de pagamentos</div>' +
+      '<div class="t-xs t-m" style="text-align:center;padding:20px">Nenhum pagamento registrado</div>' +
+    '</div>';
+}
+
+function drvVistoria() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>📅 Agendar Vistoria</h1></div></div>' +
+    '<div class="alert-item a-yellow mb4"><span class="alert-icon">📅</span><div class="alert-content"><div class="alert-title">Vistoria mensal obrigatória</div><div class="alert-desc">A cada 10.000 km também é necessário agendar vistoria. Aviso: excesso de KM gera cobrança adicional conforme contrato.</div></div></div>' +
+    '<div class="card mb4"><div class="section-title">Solicitar agendamento</div>' +
+      '<div class="fg"><label>Data preferida</label><input type="date"></div>' +
+      '<div class="fg"><label>Período preferido</label><select><option>Manhã (8h-12h)</option><option>Tarde (12h-18h)</option></select></div>' +
+      '<div class="fg"><label>Observação</label><textarea placeholder="Alguma observação para a vistoria?"></textarea></div>' +
+      '<button class="btn btn-accent btn-full" onclick="solicitarVistoria()">📤 Solicitar agendamento</button>' +
+    '</div>' +
+    '<div class="card"><div class="section-title">Local da vistoria</div>' +
+      '<div class="t-xs t-m">📍 Av. Central, 1000 — São Paulo, SP</div>' +
+      '<div class="t-xs t-m">Seg-Sex: 8h-18h · Sáb: 8h-13h</div>' +
+      '<div class="mono" style="color:var(--accent);margin-top:6px">📞 (11) 99999-0000</div>' +
+    '</div>';
+}
+
+function solicitarVistoria() {
+  var msg = 'Olá! Gostaria de agendar minha vistoria mensal. Estou disponível na data selecionada. Meu veículo: [placa]. Contrato: [número]. Obrigado!\n\nSuporte Ondrive\n(11) 99999-0000';
+  copyText(msg);
+  showToast('Mensagem copiada! Envie pelo WhatsApp para (11) 99999-0000', 'green');
+}
+
+function drvContrato() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>📄 Meu Contrato</h1></div></div>' +
+    '<div class="card" style="text-align:center;padding:40px">' +
+      '<div style="font-size:48px;margin-bottom:16px">📄</div>' +
+      '<div class="fw7 mb2">Contrato não disponível</div>' +
+      '<p class="t-xs t-m mb4">Após aprovação e assinatura, seu contrato estará disponível aqui para download.</p>' +
+      '<button class="btn btn-ghost" onclick="showToast(\'Entre em contato com o suporte\')">💬 Solicitar contrato</button>' +
+    '</div>';
+}
+
+function drvDocs() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>🗂️ Meus Documentos</h1></div></div>' +
+    '<div class="alert-item a-blue mb3"><span class="alert-icon">ℹ️</span><div class="alert-content"><div class="alert-desc">Contatos de referência devem ser verificáveis. O suporte entrará em contato com as referências informadas.</div></div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:12px">' +
+      drvDocCard('🪪','CNH','Sua CNH frente e verso','dz-d-cnh') +
+      drvDocCard('🏠','Comprovantes','Comprovante de residência e outros documentos','dz-d-comp') +
+      drvDocCard('📱','Print dos Apps','Foto + nome + nota de todos os apps','dz-d-app') +
+      '<div class="card"><div class="section-title">👥 Contatos de Referência</div>' +
+        '<div style="padding:10px;background:var(--bg2);border-radius:var(--rs);margin-bottom:8px">' +
+          '<div class="fw7 t-xs mb1">Referência 1</div>' +
+          '<div class="t-xs t-m">Nome: —</div>' +
+          '<div class="t-xs t-m">Telefone: —</div>' +
+          '<div class="t-xs t-m">Endereço: —</div>' +
+        '</div>' +
+        '<div style="padding:10px;background:var(--bg2);border-radius:var(--rs)">' +
+          '<div class="fw7 t-xs mb1">Referência 2</div>' +
+          '<div class="t-xs t-m">Nome: —</div>' +
+          '<div class="t-xs t-m">Telefone: —</div>' +
+          '<div class="t-xs t-m">Endereço: —</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function drvDocCard(icon, titulo, desc, dzId) {
+  return '<div class="card"><div class="section-title">' + icon + ' ' + titulo + '</div>' +
+    '<p class="t-xs t-m mb3">' + desc + '</p>' +
+    '<div class="dropzone" id="' + dzId + '"><input type="file" accept="image/*,.pdf" multiple onchange="handleFile(event,\'' + dzId + '\')"><div class="dz-icon">' + icon + '</div><p><strong>Clique ou arraste</strong><br>JPG, PNG ou PDF</p></div>' +
+    '</div>';
+}
+
+function drvKm() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>🛣️ Informar KM</h1></div></div>' +
+    '<div class="alert-item a-yellow mb4"><span class="alert-icon">⚠️</span><div class="alert-content"><div class="alert-title">Limite: 55.000 km/mês</div><div class="alert-desc">Ultrapassagem de KM gera cobrança adicional conforme tabela do contrato.</div></div></div>' +
+    '<div class="card mb4"><div class="section-title">Registrar KM atual</div>' +
+      '<div class="fg"><label>KM atual do veículo</label><input type="number" id="drv-km-val" placeholder="Ex: 45000"></div>' +
+      '<div class="fg"><label>Data da leitura</label><input type="date" id="drv-km-data"></div>' +
+      '<div class="fg"><label>Foto do odômetro (obrigatória)</label>' +
+        '<div class="dropzone" id="dz-km"><input type="file" accept="image/*" onchange="handleFile(event,\'dz-km\')"><div class="dz-icon">📸</div><p><strong>Clique ou arraste</strong><br>Foto do painel mostrando o KM</p></div>' +
+      '</div>' +
+      '<button class="btn btn-accent btn-full" onclick="enviarKM()">📤 Enviar KM</button>' +
+    '</div>' +
+    '<div class="card"><div class="section-title">Histórico de KM</div>' +
+      '<div class="t-xs t-m" style="text-align:center;padding:20px">Nenhum registro de KM ainda</div>' +
+    '</div>';
+}
+
+function enviarKM() {
+  var val  = document.getElementById('drv-km-val');
+  var data = document.getElementById('drv-km-data');
+  if (!val || !val.value) { showToast('Informe o KM', 'red'); return; }
+  var dz = document.getElementById('dz-km');
+  if (!dz || dz.querySelectorAll('.file-item').length === 0) { showToast('Envie a foto do odômetro', 'red'); return; }
+  showToast('KM informado: ' + fmtNum(parseInt(val.value)) + ' km ✓', 'green');
+}
+
+function drvMultas() {
+  return '<button class="btn-back" onclick="navDrv(\'drv-inicio\',null)">← Início</button>' +
+    '<div class="ph"><div><h1>🚨 Multas</h1></div></div>' +
+    '<div class="card" style="text-align:center;padding:40px">' +
+      '<div style="font-size:48px;margin-bottom:16px">✅</div>' +
+      '<div class="fw7 mb2">Nenhuma multa registrada</div>' +
+      '<p class="t-xs t-m">As multas do seu veículo serão exibidas aqui automaticamente via API DETRAN.</p>' +
+    '</div>';
+}
+
+// ═══════════════════════════════════════════
+// RÉGUA DE COBRANÇA (mensagens automáticas)
+// ═══════════════════════════════════════════
+function gerarMsgCobranca(tipo, nomeMotorista, placa, valor, atraso) {
+  var msgs = {
+    1: 'Olá, ' + nomeMotorista + '! ⚠️\n\nIdentificamos que não recebemos o valor de ' + fmtMoney(valor) + ' referente ao contrato do veículo ' + placa + '.\n\nPor favor, regularize o pagamento o quanto antes para evitar encargos.\n\nJuros: 12% ao dia.\n\nPix: ondrive@pix.com.br\n\nSuporte Ondrive\n(11) 99999-0000',
+    2: 'ATENÇÃO, ' + nomeMotorista + '! 🚨\n\nSeu veículo ' + placa + ' está com ' + atraso + ' dias de atraso no pagamento de ' + fmtMoney(valor) + '.\n\nCOMUNICADO: O veículo SERÁ BLOQUEADO por não pagamento, conforme cláusula 3 do seu contrato.\n\nReconchecimento de dívida e contato com suporte são necessários IMEDIATAMENTE.\n\nEm caso de ausência de comunicação, será acionada BUSCA E APREENSÃO do veículo.\n\nSuporte Ondrive\n(11) 99999-0000',
+    3: 'NOTIFICAÇÃO FINAL, ' + nomeMotorista + '!\n\n🚔 SEU CONTRATO FOI RESCINDIDO por atraso superior ao permitido em contrato.\n\n🔒 O veículo ' + placa + ' está BLOQUEADO.\n\n⚖️ Em 24h será acionado processo de BUSCA E APREENSÃO caso não haja comunicação.\n\nEntre em contato AGORA:\n📞 (11) 99999-0000\n\nSuporte Ondrive'
+  };
+  return msgs[tipo] || msgs[1];
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+(function init() {
+  // Calendário inicial
+  initCalDisplay('cal-date-display');
+  // Render default
+  renderPage('inicio');
+  renderDrv('drv-inicio');
+})();
+</script>
+</body>
+</html>
